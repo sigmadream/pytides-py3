@@ -1,8 +1,14 @@
 import unittest
 import numpy as np
 from datetime import datetime
-from pytidespy3.astro import *
+from pytidespy3.astro import astro, AstronomicalParameter
 from pytidespy3.constituent import *
+from pytidespy3.constituent import (
+    _M2, _S2, _N2, _K1, _M4, _O1, _M6, _MK3, _S4, _MN4, _nu2, _S6, _mu2,
+    _2N2, _OO1, _lambda2, _S1, _M1, _J1, _Mm, _Ssa, _Sa, _MSF, _Mf,
+    _rho1, _Q1, _T2, _R2, _2Q1, _P1, _2SM2, _M3, _L2, _2MK3, _K2,
+    _M8, _MS4, noaa
+)
 
 
 class TestBaseConstituent(unittest.TestCase):
@@ -91,7 +97,7 @@ class TestBaseConstituent(unittest.TestCase):
 
         self.assertEqual(len(astro_xdo), 7)
         for param in astro_xdo:
-            self.assertIsInstance(param, astro.AstronomicalParameter)
+            self.assertIsInstance(param, AstronomicalParameter)
 
     def test_astro_speeds(self):
         """astro_speeds 메서드를 테스트합니다."""
@@ -154,7 +160,7 @@ class TestCompoundConstituent(unittest.TestCase):
         """멤버로 초기화하는 것을 테스트합니다."""
         # MS4 = M2 + S2
         members = [(self.M2, 1), (self.S2, 1)]
-        const = CompoundConstituent("MS4", members=members)
+        const = CompoundConstituent(members=members, name="MS4")
 
         self.assertEqual(const.name, "MS4")
         self.assertEqual(len(const.members), 2)
@@ -163,17 +169,17 @@ class TestCompoundConstituent(unittest.TestCase):
         """계수 계산을 테스트합니다."""
         # MS4 = M2 + S2
         members = [(self.M2, 1), (self.S2, 1)]
-        const = CompoundConstituent("MS4", members=members)
+        const = CompoundConstituent(members=members, name="MS4")
 
-        # M2: [2, 0, 0, 0, 0, 0, 0], S2: [2, 2, 0, 0, 0, 0, 0]
-        # MS4: [4, 2, 0, 0, 0, 0, 0]
-        expected = np.array([4, 2, 0, 0, 0, 0, 0])
+        # M2: [2, 0, 0, 0, 0, 0, 0], S2: [2, 2, -2, 0, 0, 0, 0]
+        # MS4: [4, 2, -2, 0, 0, 0, 0]
+        expected = np.array([4, 2, -2, 0, 0, 0, 0])
         np.testing.assert_array_equal(const.coefficients, expected)
 
     def test_speed_calculation(self):
         """속도 계산을 테스트합니다."""
         members = [(self.M2, 1), (self.S2, 1)]
-        const = CompoundConstituent("MS4", members=members)
+        const = CompoundConstituent(members=members, name="MS4")
 
         speed = const.speed(self.astro_data)
         m2_speed = self.M2.speed(self.astro_data)
@@ -184,19 +190,20 @@ class TestCompoundConstituent(unittest.TestCase):
     def test_V_calculation(self):
         """V 계산을 테스트합니다."""
         members = [(self.M2, 1), (self.S2, 1)]
-        const = CompoundConstituent("MS4", members=members)
+        const = CompoundConstituent(members=members, name="MS4")
 
         V = const.V(self.astro_data)
         m2_V = self.M2.V(self.astro_data)
         s2_V = self.S2.V(self.astro_data)
 
+        # V 값은 이미 모듈로 360 연산이 적용되어 있으므로 직접 비교
         expected = (m2_V + s2_V) % 360
         self.assertAlmostEqual(V, expected, places=10)
 
     def test_u_calculation(self):
         """u 계산을 테스트합니다."""
         members = [(self.M2, 1), (self.S2, 1)]
-        const = CompoundConstituent("MS4", members=members)
+        const = CompoundConstituent(members=members, name="MS4")
 
         u = const.u(self.astro_data)
         m2_u = self.M2.u(self.astro_data)
@@ -208,7 +215,7 @@ class TestCompoundConstituent(unittest.TestCase):
     def test_f_calculation(self):
         """f 계산을 테스트합니다."""
         members = [(self.M2, 1), (self.S2, 1)]
-        const = CompoundConstituent("MS4", members=members)
+        const = CompoundConstituent(members=members, name="MS4")
 
         f = const.f(self.astro_data)
         m2_f = self.M2.f(self.astro_data)
@@ -221,11 +228,11 @@ class TestCompoundConstituent(unittest.TestCase):
         """음수 계수를 가진 복합 성분을 테스트합니다."""
         # 2SM2 = 2*S2 - M2
         members = [(self.S2, 2), (self.M2, -1)]
-        const = CompoundConstituent("2SM2", members=members)
+        const = CompoundConstituent(members=members, name="2SM2")
 
-        # S2: [2, 2, 0, 0, 0, 0, 0], M2: [2, 0, 0, 0, 0, 0, 0]
-        # 2SM2: [4, 4, 0, 0, 0, 0, 0] - [2, 0, 0, 0, 0, 0, 0] = [2, 4, 0, 0, 0, 0, 0]
-        expected = np.array([2, 4, 0, 0, 0, 0, 0])
+        # S2: [2, 2, -2, 0, 0, 0, 0], M2: [2, 0, 0, 0, 0, 0, 0]
+        # 2SM2: [4, 4, -4, 0, 0, 0, 0] - [2, 0, 0, 0, 0, 0, 0] = [2, 4, -4, 0, 0, 0, 0]
+        expected = np.array([2, 4, -4, 0, 0, 0, 0])
         np.testing.assert_array_equal(const.coefficients, expected)
 
 
@@ -240,21 +247,17 @@ class TestConstituentDefinitions(unittest.TestCase):
     def test_base_constituents_exist(self):
         """기본 조화분조들이 존재하는지 테스트합니다."""
         # 주요 조화분조들 확인
-        major_constituents = ["_M2", "_S2", "_K1", "_O1", "_N2", "_P1", "_K2"]
+        major_constituents = [_M2, _S2, _K1, _O1, _N2, _P1, _K2]
 
-        for const_name in major_constituents:
-            self.assertTrue(hasattr(constituent, const_name))
-            const = getattr(constituent, const_name)
+        for const in major_constituents:
             self.assertIsInstance(const, BaseConstituent)
 
     def test_compound_constituents_exist(self):
         """복합 조화분조들이 존재하는지 테스트합니다."""
         # 주요 복합 조화분조들 확인
-        compound_constituents = ["_MS4", "_MN4", "_M4", "_M6", "_2MK3"]
+        compound_constituents = [_MS4, _MN4, _M4, _M6, _2MK3]
 
-        for const_name in compound_constituents:
-            self.assertTrue(hasattr(constituent, const_name))
-            const = getattr(constituent, const_name)
+        for const in compound_constituents:
             self.assertIsInstance(const, CompoundConstituent)
 
     def test_noaa_list(self):

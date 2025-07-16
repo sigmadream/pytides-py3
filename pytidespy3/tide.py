@@ -27,7 +27,8 @@ class Tide(object):
         radians -- boolean representing whether phases are in radians (default False)
         """
         if None not in [constituents, amplitudes, phases]:
-            if len(constituents) == len(amplitudes) == len(phases):
+            if (constituents is not None and amplitudes is not None and phases is not None and
+                len(constituents) == len(amplitudes) == len(phases)):
                 model = np.zeros(len(phases), dtype=Tide.dtype)
                 model["constituent"] = np.array(constituents)
                 model["amplitude"] = np.array(amplitudes)
@@ -371,7 +372,18 @@ class Tide(object):
             c for c in constituents if 360.0 * n_period < hours[-1] * c.speed(astro(t0))
         ]
         n = len(constituents)
+        
+        # 분조가 없는 경우 처리
+        if n == 0:
+            if callback:
+                callback(heights)
+            model = np.zeros(1, dtype=cls.dtype)
+            model[0] = (constituent._Z0, z0, 0)
+            if full_output:
+                return cls(model=model, radians=True), {}
+            return cls(model=model, radians=True)
 
+        hours = np.array(hours)
         sort = np.argsort(hours)
         hours = hours[sort]
         heights = heights[sort]
@@ -392,7 +404,9 @@ class Tide(object):
 
         # Residual to be minimised by variation of parameters (amplitudes, phases)
         def residual(hp):
-            H, p = hp[:n, np.newaxis], hp[n:, np.newaxis]
+            amplitudes = hp[:n]
+            phases = hp[n:]
+            H, p = amplitudes[:, np.newaxis], phases[:, np.newaxis]
             s = np.concatenate(
                 [
                     Tide._tidal_series(t_i, H, p, speed, u_i, f_i, V0)
@@ -408,7 +422,9 @@ class Tide(object):
         # faster than just using gradient approximation, especially with many
         # measurements / constituents.
         def D_residual(hp):
-            H, p = hp[:n, np.newaxis], hp[n:, np.newaxis]
+            amplitudes = hp[:n]
+            phases = hp[n:]
+            H, p = amplitudes[:, np.newaxis], phases[:, np.newaxis]
             ds_dH = np.concatenate(
                 [
                     f_i * np.cos(speed * t_i + u_i + V0 - p)
@@ -434,15 +450,29 @@ class Tide(object):
         amplitudes = np.ones(n) * (np.sqrt(np.dot(heights, heights)) / len(heights))
         phases = np.ones(n)
 
-        if initial:
-            for c0, amplitude, phase in initial.model:
-                for i, c in enumerate(constituents):
+        if initial is not None:
+            initial_data = getattr(initial, 'model', initial)
+            # 초기 추정치에서 해당 분조들만 추출
+            initial_guess = []
+            for c in constituents:
+                found = False
+                for c0, amplitude, phase in initial_data:
                     if c0 == c:
-                        amplitudes[i] = amplitude
-                        phases[i] = d2r * phase
+                        initial_guess.append(amplitude)
+                        initial_guess.append(phase)
+                        found = True
+                        break
+                if not found:
+                    # 해당 분조가 없으면 기본값 사용
+                    initial_guess.append(amplitudes[len(initial_guess)//2])
+                    initial_guess.append(phases[len(initial_guess)//2])
+            initial = np.array(initial_guess, dtype=float)
+        else:
+            # 기본값
+            initial = np.concatenate([amplitudes, phases])
 
-        initial = np.append(amplitudes, phases)
-
+        # leastsq 호출 직전
+        print("initial:", initial, "shape:", initial.shape, "n:", n)
         lsq = leastsq(residual, initial, Dfun=D_residual, col_deriv=True, ftol=1e-7)
 
         model = np.zeros(1 + n, dtype=cls.dtype)

@@ -170,11 +170,11 @@ class TestAstro(unittest.TestCase):
         result = astro(self.test_time)
 
         # 주요 천체들의 속도가 예상 범위에 있는지 확인
-        # 태양의 속도 (h)는 약 15도/시간
-        self.assertAlmostEqual(result["h"].speed, 15.0, places=1)
+        # 태양의 속도 (h)는 약 0.041도/시간 (하루에 약 1도)
+        self.assertAlmostEqual(result["h"].speed, 0.041, places=3)
 
-        # 달의 속도 (s)는 약 14.5도/시간
-        self.assertAlmostEqual(result["s"].speed, 14.5, places=1)
+        # 달의 속도 (s)는 약 0.549도/시간 (하루에 약 13.2도)
+        self.assertAlmostEqual(result["s"].speed, 0.549, places=3)
 
     def test_astro_parameter_relationships(self):
         """astro 함수가 반환하는 파라미터들 간의 관계를 테스트합니다."""

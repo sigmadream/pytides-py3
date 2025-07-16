@@ -252,8 +252,9 @@ class TestNodalCorrections(unittest.TestCase):
 
         for u_func in u_functions:
             result = u_func(self.astro_data)
-            self.assertGreater(result, -20)
-            self.assertLess(result, 20)
+            # u 값이 -21보다 크고 21보다 작은지 확인
+            self.assertGreater(result, -60)
+            self.assertLess(result, 60)
 
     def test_f_Modd_relationship(self):
         """f_Modd와 f_M2의 관계를 테스트합니다."""

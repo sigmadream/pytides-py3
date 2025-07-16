@@ -29,10 +29,14 @@ class BaseConstituent(object):
         return [self.xdo_int[l.upper()] for l in xdo if l in string.ascii_letters]
 
     def coefficients_to_xdo(self, coefficients):
-        return ''.join([self.int_xdo[c] for c in coefficients])
+        result = ''.join([self.int_xdo[c] for c in coefficients])
+        # XDO 표기법에서 일반적으로 사용되는 형식으로 공백 추가
+        if len(result) >= 7:
+            return result[0] + ' ' + result[1:4] + ' ' + result[4:7]
+        return result
 
     def V(self, astro):
-        return np.dot(self.coefficients, self.astro_values(astro))
+        return np.mod(np.dot(self.coefficients, self.astro_values(astro)), 360.0)
 
     def xdo(self):
         return self.coefficients_to_xdo(self.coefficients)

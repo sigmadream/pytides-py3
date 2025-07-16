@@ -6,7 +6,7 @@
 
 ```bash
 pip install -e .
-python -m unittest discover -s tests > tests_log.txt 2>&1
+python -m unittest discover -s tests
 ```
 
 ## 주요 특징:
