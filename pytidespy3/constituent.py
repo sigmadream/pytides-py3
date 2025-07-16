@@ -7,6 +7,8 @@ import pytidespy3.nodal_corrections as nc
 
 
 class BaseConstituent(object):
+    __slots__ = ['coefficients', 'name', 'u', 'f']
+    
     xdo_int = {
         'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 6, 'G': 7, 'H': 8, 'I': 9,
         'J': 10, 'K': 11, 'L': 12, 'M': 13, 'N': 14, 'O': 15, 'P': 16, 'Q': 17,
@@ -18,9 +20,9 @@ class BaseConstituent(object):
 
     def __init__(self, name, xdo='', coefficients=[], u=nc.u_zero, f=nc.f_unity):
         if xdo == '':
-            self.coefficients = np.array(coefficients)
+            self.coefficients = np.asarray(coefficients, dtype=np.float64)
         else:
-            self.coefficients = np.array(self.xdo_to_coefficients(xdo))
+            self.coefficients = np.asarray(self.xdo_to_coefficients(xdo), dtype=np.float64)
         self.name = name
         self.u = u
         self.f = f
@@ -30,28 +32,27 @@ class BaseConstituent(object):
 
     def coefficients_to_xdo(self, coefficients):
         result = ''.join([self.int_xdo[c] for c in coefficients])
-        # XDO 표기법에서 일반적으로 사용되는 형식으로 공백 추가
         if len(result) >= 7:
             return result[0] + ' ' + result[1:4] + ' ' + result[4:7]
         return result
 
     def V(self, astro):
-        return np.mod(np.dot(self.coefficients, self.astro_values(astro)), 360.0)
+        return np.mod(self.coefficients @ self.astro_values(astro), 360.0)
 
     def xdo(self):
         return self.coefficients_to_xdo(self.coefficients)
 
     def speed(self, a):
-        return np.dot(self.coefficients, self.astro_speeds(a))
+        return self.coefficients @ self.astro_speeds(a)
 
     def astro_xdo(self, a):
         return [a['T+h-s'], a['s'], a['h'], a['p'], a['N'], a['pp'], a['90']]
 
     def astro_speeds(self, a):
-        return np.array([each.speed for each in self.astro_xdo(a)])
+        return np.asarray([each.speed for each in self.astro_xdo(a)], dtype=np.float64)
 
     def astro_values(self, a):
-        return np.array([each.value for each in self.astro_xdo(a)])
+        return np.asarray([each.value for each in self.astro_xdo(a)], dtype=np.float64)
 
     # Consider two out of phase constituents which travel at the same speed to
     # be identical
@@ -74,6 +75,7 @@ class CompoundConstituent(BaseConstituent):
 
         super(CompoundConstituent, self).__init__(**kwargs)
 
+        # 벡터화 연산으로 coefficients 계산 최적화
         self.coefficients = reduce(op.add, [c.coefficients * n for (c, n) in members])
 
     def speed(self, a):

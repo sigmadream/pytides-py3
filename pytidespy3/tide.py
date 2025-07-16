@@ -5,7 +5,7 @@ from collections import OrderedDict
 from collections.abc import Iterable
 from itertools import takewhile, count
 from datetime import datetime, timedelta
-from scipy.optimize import leastsq, fsolve
+from scipy.optimize import least_squares
 from pytidespy3.astro import astro
 
 d2r, r2d = np.pi / 180.0, 180.0 / np.pi
@@ -31,8 +31,8 @@ class Tide(object):
                 len(constituents) == len(amplitudes) == len(phases)):
                 model = np.zeros(len(phases), dtype=Tide.dtype)
                 model["constituent"] = np.array(constituents)
-                model["amplitude"] = np.array(amplitudes)
-                model["phase"] = np.array(phases)
+                model["amplitude"] = np.asarray(amplitudes, dtype=np.float64)
+                model["phase"] = np.asarray(phases, dtype=np.float64)
             else:
                 raise ValueError(
                     "Constituents, amplitudes and phases should all be arrays of equal length."
@@ -76,14 +76,14 @@ class Tide(object):
         a = [astro(t_i) for t_i in t]
 
         # For convenience give u, V0 (but not speed!) in [0, 360)
-        V0 = np.array([c.V(a0) for c in constituents])[:, np.newaxis]
-        speed = np.array([c.speed(a0) for c in constituents])[:, np.newaxis]
+        V0 = np.asarray([c.V(a0) for c in constituents], dtype=np.float64)[:, np.newaxis]
+        speed = np.asarray([c.speed(a0) for c in constituents], dtype=np.float64)[:, np.newaxis]
         u = [
-            np.mod(np.array([c.u(a_i) for c in constituents])[:, np.newaxis], 360.0)
+            np.mod(np.asarray([c.u(a_i) for c in constituents], dtype=np.float64)[:, np.newaxis], 360.0)
             for a_i in a
         ]
         f = [
-            np.mod(np.array([c.f(a_i) for c in constituents])[:, np.newaxis], 360.0)
+            np.mod(np.asarray([c.f(a_i) for c in constituents], dtype=np.float64)[:, np.newaxis], 360.0)
             for a_i in a
         ]
 
@@ -101,19 +101,15 @@ class Tide(object):
         """
         t0 = t[0]
         hours = self._hours(t0, t)
-        partition = 240.0
-        t = self._partition(hours, partition)
-        times = self._times(t0, [(i + 0.5) * partition for i in range(len(t))])
-        speed, u, f, V0 = self.prepare(t0, times, radians=True)
+        # t0 기준으로만 prepare
+        speed, u, f, V0 = self.prepare(t0, radians=True)
         H = self.model["amplitude"][:, np.newaxis]
         p = d2r * self.model["phase"][:, np.newaxis]
-
-        return np.concatenate(
-            [
-                Tide._tidal_series(t_i, H, p, speed, u_i, f_i, V0)
-                for t_i, u_i, f_i in zip(t, u, f)
-            ]
-        )
+        # u, f는 리스트에서 첫 번째 요소만 사용 (t0 기준)
+        u_single = u[0] if isinstance(u, list) else u
+        f_single = f[0] if isinstance(f, list) else f
+        hours_array = np.array(hours).reshape(1, -1)
+        return Tide._tidal_series(hours_array, H, p, speed, u_single, f_single, V0)
 
     def highs(self, *args):
         """
@@ -238,7 +234,7 @@ class Tide(object):
                 )
                 for a, b in zip(*intervals):
                     if d(a) * d(b) < 0:
-                        extrema = fsolve(d, (a + b) / 2.0, fprime=d2)[0]
+                        extrema = least_squares(d, (a + b) / 2.0, jac='2-point').x[0]
                         time = Tide._times(start, extrema)
                         [height] = self.at([time])
                         hilo = "H" if d2(extrema) < 0 else "L"
@@ -295,7 +291,58 @@ class Tide(object):
 
     @staticmethod
     def _tidal_series(t, amplitude, phase, speed, u, f, V0):
-        return np.sum(amplitude * f * np.cos(speed * t + (V0 + u) - phase), axis=0)
+        # 벡터화된 조석 계산
+        # t: (1, n_times) - 시간 배열
+        # amplitude: (n_constituents, 1) - 진폭
+        # phase: (n_constituents, 1) - 위상
+        # speed: (n_constituents, 1) - 속도
+        # u, f, V0: (n_constituents, 1) - 노드 팩터들
+        
+        # 각 조화분조의 기여도 계산
+        amplitude_f = amplitude * f  # (n_constituents, 1)
+        
+        # speed * t: (n_constituents, n_times)
+        speed_t = speed * t  # 브로드캐스팅
+        
+        # V0 + u - phase: (n_constituents, 1)
+        angle_offset = V0 + u - phase
+        
+        # cos 계산 - 브로드캐스팅으로 각 시간에 대해 계산
+        cos_term = np.cos(speed_t + angle_offset)
+        
+        # 각 조화분조의 기여도 합산
+        result = np.sum(amplitude_f * cos_term, axis=0)
+        
+        return result
+
+    @staticmethod
+    def _tidal_series_single(t, amplitude, phase, speed, u, f, V0):
+        # 단일 시간에 대한 조석 계산
+        # t: 스칼라 - 시간
+        # amplitude: (n_constituents, 1) - 진폭
+        # phase: (n_constituents, 1) - 위상
+        # speed: (n_constituents, 1) - 속도
+        # u, f, V0: (n_constituents, 1) - 노드 팩터들
+        
+        # 각 조화분조의 기여도 계산
+        amplitude_f = amplitude * f  # (n_constituents, 1)
+        
+        # speed * t: (n_constituents, 1)
+        speed_t = speed * t
+        
+        # V0 + u - phase: (n_constituents, 1)
+        angle_offset = V0 + u - phase
+        
+        # 최종 각도: speed * t + angle_offset
+        final_angle = speed_t + angle_offset
+        
+        # cos 계산
+        cos_term = np.cos(final_angle)
+        
+        # 각 조화분조의 기여도 합산
+        result = np.sum(amplitude_f * cos_term)
+        
+        return result
 
     def normalize(self):
         """
@@ -368,9 +415,10 @@ class Tide(object):
 
         # Only analyse frequencies which complete at least n_period cycles over
         # the data period.
-        constituents = [
-            c for c in constituents if 360.0 * n_period < hours[-1] * c.speed(astro(t0))
-        ]
+        if n_period > 0:
+            constituents = [
+                c for c in constituents if 360.0 * n_period < hours[-1] * c.speed(astro(t0))
+            ]
         n = len(constituents)
         
         # 분조가 없는 경우 처리
@@ -471,15 +519,13 @@ class Tide(object):
             # 기본값
             initial = np.concatenate([amplitudes, phases])
 
-        # leastsq 호출 직전
-        print("initial:", initial, "shape:", initial.shape, "n:", n)
-        lsq = leastsq(residual, initial, Dfun=D_residual, col_deriv=True, ftol=1e-7)
+        lsq = least_squares(residual, initial, jac='2-point', ftol=1e-7)
 
         model = np.zeros(1 + n, dtype=cls.dtype)
         model[0] = (constituent._Z0, z0, 0)
         model[1:]["constituent"] = constituents[:]
-        model[1:]["amplitude"] = lsq[0][:n]
-        model[1:]["phase"] = lsq[0][n:]
+        model[1:]["amplitude"] = lsq.x[:n]
+        model[1:]["phase"] = lsq.x[n:]
 
         if full_output:
             return cls(model=model, radians=True), lsq
