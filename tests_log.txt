@@ -1,0 +1,308 @@
+..........F........F..EF......F.EEEEEEEEEEEEEE.FF.......F...............................F....EEEE....................F.
+======================================================================
+ERROR: test_astro_xdo (test_constituent.TestBaseConstituent.test_astro_xdo)
+astro_xdo 메서드를 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_constituent.py", line 94, in test_astro_xdo
+    self.assertIsInstance(param, astro.AstronomicalParameter)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'function' object has no attribute 'AstronomicalParameter'
+
+======================================================================
+ERROR: test_V_calculation (test_constituent.TestCompoundConstituent.test_V_calculation)
+V 계산을 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_constituent.py", line 187, in test_V_calculation
+    const = CompoundConstituent("MS4", members=members)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: CompoundConstituent.__init__() got multiple values for argument 'members'
+
+======================================================================
+ERROR: test_coefficients_calculation (test_constituent.TestCompoundConstituent.test_coefficients_calculation)
+계수 계산을 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_constituent.py", line 166, in test_coefficients_calculation
+    const = CompoundConstituent("MS4", members=members)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: CompoundConstituent.__init__() got multiple values for argument 'members'
+
+======================================================================
+ERROR: test_f_calculation (test_constituent.TestCompoundConstituent.test_f_calculation)
+f 계산을 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_constituent.py", line 211, in test_f_calculation
+    const = CompoundConstituent("MS4", members=members)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: CompoundConstituent.__init__() got multiple values for argument 'members'
+
+======================================================================
+ERROR: test_init_with_members (test_constituent.TestCompoundConstituent.test_init_with_members)
+멤버로 초기화하는 것을 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_constituent.py", line 157, in test_init_with_members
+    const = CompoundConstituent("MS4", members=members)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: CompoundConstituent.__init__() got multiple values for argument 'members'
+
+======================================================================
+ERROR: test_negative_coefficients (test_constituent.TestCompoundConstituent.test_negative_coefficients)
+음수 계수를 가진 복합 성분을 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_constituent.py", line 224, in test_negative_coefficients
+    const = CompoundConstituent("2SM2", members=members)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: CompoundConstituent.__init__() got multiple values for argument 'members'
+
+======================================================================
+ERROR: test_speed_calculation (test_constituent.TestCompoundConstituent.test_speed_calculation)
+속도 계산을 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_constituent.py", line 176, in test_speed_calculation
+    const = CompoundConstituent("MS4", members=members)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: CompoundConstituent.__init__() got multiple values for argument 'members'
+
+======================================================================
+ERROR: test_u_calculation (test_constituent.TestCompoundConstituent.test_u_calculation)
+u 계산을 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_constituent.py", line 199, in test_u_calculation
+    const = CompoundConstituent("MS4", members=members)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: CompoundConstituent.__init__() got multiple values for argument 'members'
+
+======================================================================
+ERROR: test_base_constituents_exist (test_constituent.TestConstituentDefinitions.test_base_constituents_exist)
+기본 조화분조들이 존재하는지 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_constituent.py", line 246, in test_base_constituents_exist
+    self.assertTrue(hasattr(constituent, const_name))
+                            ^^^^^^^^^^^
+NameError: name 'constituent' is not defined. Did you mean: 'BaseConstituent'?
+
+======================================================================
+ERROR: test_compound_constituent_calculations (test_constituent.TestConstituentDefinitions.test_compound_constituent_calculations)
+복합 조화분조들의 계산을 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_constituent.py", line 335, in test_compound_constituent_calculations
+    MS4 = _MS4
+          ^^^^
+NameError: name '_MS4' is not defined
+
+======================================================================
+ERROR: test_compound_constituents_exist (test_constituent.TestConstituentDefinitions.test_compound_constituents_exist)
+복합 조화분조들이 존재하는지 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_constituent.py", line 256, in test_compound_constituents_exist
+    self.assertTrue(hasattr(constituent, const_name))
+                            ^^^^^^^^^^^
+NameError: name 'constituent' is not defined. Did you mean: 'BaseConstituent'?
+
+======================================================================
+ERROR: test_constituent_V_values (test_constituent.TestConstituentDefinitions.test_constituent_V_values)
+조화분조들의 V 값을 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_constituent.py", line 305, in test_constituent_V_values
+    _M2,
+    ^^^
+NameError: name '_M2' is not defined
+
+======================================================================
+ERROR: test_constituent_node_factors (test_constituent.TestConstituentDefinitions.test_constituent_node_factors)
+조화분조들의 노드 인자를 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_constituent.py", line 321, in test_constituent_node_factors
+    _M2,
+    ^^^
+NameError: name '_M2' is not defined
+
+======================================================================
+ERROR: test_constituent_properties (test_constituent.TestConstituentDefinitions.test_constituent_properties)
+조화분조들의 기본 속성들을 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_constituent.py", line 272, in test_constituent_properties
+    M2 = _M2
+         ^^^
+NameError: name '_M2' is not defined
+
+======================================================================
+ERROR: test_constituent_speeds (test_constituent.TestConstituentDefinitions.test_constituent_speeds)
+조화분조들의 속도를 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_constituent.py", line 290, in test_constituent_speeds
+    _M2,
+    ^^^
+NameError: name '_M2' is not defined
+
+======================================================================
+ERROR: test_decompose_class_method (test_tide.TestTide.test_decompose_class_method)
+decompose 클래스 메서드를 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_tide.py", line 304, in test_decompose_class_method
+    decomposed_model = tide.Tide.decompose(
+                       ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sigma\works\pytides-py3\pytidespy3\tide.py", line 446, in decompose
+    lsq = leastsq(residual, initial, Dfun=D_residual, col_deriv=True, ftol=1e-7)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\sigma\works\pytides-py3\.venv\Lib\site-packages\scipy\optimize\_minpack_py.py", line 507, in leastsq
+    raise errors[info][1](errors[info][0])
+TypeError: Improper input parameters.
+
+======================================================================
+ERROR: test_decompose_full_output (test_tide.TestTide.test_decompose_full_output)
+full_output=True인 decompose를 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_tide.py", line 380, in test_decompose_full_output
+    result = tide.Tide.decompose(
+             ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sigma\works\pytides-py3\pytidespy3\tide.py", line 446, in decompose
+    lsq = leastsq(residual, initial, Dfun=D_residual, col_deriv=True, ftol=1e-7)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\sigma\works\pytides-py3\.venv\Lib\site-packages\scipy\optimize\_minpack_py.py", line 507, in leastsq
+    raise errors[info][1](errors[info][0])
+TypeError: Improper input parameters.
+
+======================================================================
+ERROR: test_decompose_with_callback (test_tide.TestTide.test_decompose_with_callback)
+콜백이 있는 decompose를 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_tide.py", line 361, in test_decompose_with_callback
+    decomposed_model = tide.Tide.decompose(
+                       ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sigma\works\pytides-py3\pytidespy3\tide.py", line 446, in decompose
+    lsq = leastsq(residual, initial, Dfun=D_residual, col_deriv=True, ftol=1e-7)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\sigma\works\pytides-py3\.venv\Lib\site-packages\scipy\optimize\_minpack_py.py", line 426, in leastsq
+    shape, dtype = _check_func('leastsq', 'func', func, x0, args, n)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\sigma\works\pytides-py3\.venv\Lib\site-packages\scipy\optimize\_minpack_py.py", line 23, in _check_func
+    res = atleast_1d(thefunc(*((x0[:numinputs],) + args)))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sigma\works\pytides-py3\pytidespy3\tide.py", line 404, in residual
+    callback(res)
+TypeError: TestTide.test_decompose_with_callback.<locals>.callback() missing 1 required positional argument: 'residual'
+
+======================================================================
+ERROR: test_decompose_with_initial_guess (test_tide.TestTide.test_decompose_with_initial_guess)
+초기 추정치가 있는 decompose를 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_tide.py", line 331, in test_decompose_with_initial_guess
+    decomposed_model = tide.Tide.decompose(
+                       ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sigma\works\pytides-py3\pytidespy3\tide.py", line 437, in decompose
+    if initial:
+       ^^^^^^^
+ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()
+
+======================================================================
+FAIL: test_astro_speed_values (test_astro.TestAstro.test_astro_speed_values)
+astro 함수가 반환하는 속도 값들을 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_astro.py", line 174, in test_astro_speed_values
+    self.assertAlmostEqual(result["h"].speed, 15.0, places=1)
+AssertionError: 0.041068640165954996 != 15.0 within 1 places (14.958931359834045 difference)
+
+======================================================================
+FAIL: test_V (test_constituent.TestBaseConstituent.test_V)
+V 메서드를 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_constituent.py", line 69, in test_V
+    self.assertLessEqual(V, 360)
+AssertionError: 495.3334839751915 not less than or equal to 360
+
+======================================================================
+FAIL: test_coefficients_to_xdo (test_constituent.TestBaseConstituent.test_coefficients_to_xdo)
+계수를 XDO로 변환하는 것을 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_constituent.py", line 54, in test_coefficients_to_xdo
+    self.assertEqual(xdo, "B ZZZ ZZZ")
+AssertionError: 'BZZZZZZ' != 'B ZZZ ZZZ'
+- BZZZZZZ
++ B ZZZ ZZZ
+?  +   +
+
+
+======================================================================
+FAIL: test_xdo (test_constituent.TestBaseConstituent.test_xdo)
+xdo 메서드를 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_constituent.py", line 85, in test_xdo
+    self.assertEqual(xdo, "B ZZZ ZZZ")
+AssertionError: 'BZZZZZZ' != 'B ZZZ ZZZ'
+- BZZZZZZ
++ B ZZZ ZZZ
+?  +   +
+
+
+======================================================================
+FAIL: test_astro_constituent_integration (test_integration.TestIntegration.test_astro_constituent_integration)
+천문학적 파라미터와 조화분조의 통합을 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_integration.py", line 141, in test_astro_constituent_integration
+    self.assertLessEqual(V, 360)
+AssertionError: 495.3334839751915 not less than or equal to 360
+
+======================================================================
+FAIL: test_constituent_node_factors_integration (test_integration.TestIntegration.test_constituent_node_factors_integration)
+조화분조와 노드 인자의 통합을 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_integration.py", line 72, in test_constituent_node_factors_integration
+    self.assertLessEqual(V, 360)
+AssertionError: 495.3334839751915 not less than or equal to 360
+
+======================================================================
+FAIL: test_tide_prediction_consistency (test_integration.TestIntegration.test_tide_prediction_consistency)
+조석 예측의 일관성을 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_integration.py", line 173, in test_tide_prediction_consistency
+    self.assertAlmostEqual(first_day_end, second_day_start, places=2)
+AssertionError: -0.09107469620180905 != -0.32555135874181323 within 2 places (0.23447666254000418 difference)
+
+======================================================================
+FAIL: test_u_values_ranges (test_nodal_corrections.TestNodalCorrections.test_u_values_ranges)
+u 값들의 범위를 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_nodal_corrections.py", line 255, in test_u_values_ranges
+    self.assertGreater(result, -20)
+AssertionError: -20.165992169918418 not greater than -20
+
+======================================================================
+FAIL: test_tide_prediction_accuracy (test_tide.TestTide.test_tide_prediction_accuracy)
+조석 예측의 정확성을 테스트합니다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\sigma\works\pytides-py3\tests\test_tide.py", line 412, in test_tide_prediction_accuracy
+    self.assertAlmostEqual(predicted_heights[0], predicted_heights[-1], places=2)
+AssertionError: -0.6744870656321519 != 0.15892530379819161 within 2 places (0.8334123694303435 difference)
+
+----------------------------------------------------------------------
+Ran 119 tests in 0.642s
+
+FAILED (failures=9, errors=19)
