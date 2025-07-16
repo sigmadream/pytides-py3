@@ -12,19 +12,28 @@ d2r, r2d = np.pi / 180.0, 180.0 / np.pi
 
 
 class Tide(object):
+    """
+    A class for tidal analysis and prediction.
+    
+    This class provides methods for analyzing tidal data and predicting
+    tidal heights using harmonic analysis.
+    """
     dtype = np.dtype([("constituent", object), ("amplitude", float), ("phase", float)])
 
     def __init__(
         self, constituents=None, amplitudes=None, phases=None, model=None, radians=False
     ):
         """
-        Initialise a tidal model. Provide constituents, amplitudes and phases OR a model.
-        Arguments:
-        constituents -- list of constituents used in the model.
-        amplitudes -- list of amplitudes corresponding to constituents
-        phases -- list of phases corresponding to constituents
-        model -- an ndarray of type Tide.dtype representing the constituents, amplitudes and phases.
-        radians -- boolean representing whether phases are in radians (default False)
+        Initialize a tidal model.
+        
+        Provide constituents, amplitudes and phases OR a model.
+        
+        Args:
+            constituents: List of constituents used in the model.
+            amplitudes: List of amplitudes corresponding to constituents
+            phases: List of phases corresponding to constituents
+            model: An ndarray of type Tide.dtype representing the constituents, amplitudes and phases.
+            radians: Boolean representing whether phases are in radians (default False)
         """
         if None not in [constituents, amplitudes, phases]:
             if (constituents is not None and amplitudes is not None and phases is not None and
@@ -42,7 +51,7 @@ class Tide(object):
                 raise ValueError("Model must be a numpy array with dtype == Tide.dtype")
         else:
             raise ValueError(
-                "Must be initialised with constituents, amplitudes and phases; or a model."
+                "Must be initialized with constituents, amplitudes and phases; or a model."
             )
         if radians:
             model["phase"] = r2d * model["phase"]
@@ -50,22 +59,37 @@ class Tide(object):
         self.normalize()
 
     def prepare(self, *args, **kwargs):
+        """
+        Prepare constituent speed and equilibrium argument at a given time.
+        
+        Returns:
+            Prepared tidal parameters for analysis.
+        """
         return Tide._prepare(self.model["constituent"], *args, **kwargs)
 
     @staticmethod
     def _prepare(constituents, t0, t=None, radians=True):
         """
         Return constituent speed and equilibrium argument at a given time, and constituent node factors at given times.
-        Arguments:
-        constituents -- list of constituents to prepare
-        t0 -- time at which to evaluate speed and equilibrium argument for each constituent
-        t -- list of times at which to evaluate node factors for each constituent (default: t0)
-        radians -- whether to return the angular arguments in radians or degrees (default: True)
+        
+        The equilibrium argument is constant and taken at the beginning of the
+        time series (t0). The speed of the equilibrium argument changes very
+        slowly, so again we take it to be constant over any length of data. The
+        node factors change more rapidly.
+        
+        Args:
+            constituents: List of constituents to prepare
+            t0: Time at which to evaluate speed and equilibrium argument for each constituent
+            t: List of times at which to evaluate node factors for each constituent (default: t0)
+            radians: Whether to return the angular arguments in radians or degrees (default: True)
+            
+        Returns:
+            Tuple of (speed, u, f, V0) where:
+                speed: Constituent speeds
+                u: Node factors u
+                f: Node factors f  
+                V0: Equilibrium arguments
         """
-        # The equilibrium argument is constant and taken at the beginning of the
-        # time series (t0).  The speed of the equilibrium argument changes very
-        # slowly, so again we take it to be constant over any length of data. The
-        # node factors change more rapidly.
         if isinstance(t0, Iterable):
             t0 = t0[0]
         if t is None:
@@ -96,16 +120,20 @@ class Tide(object):
     def at(self, t):
         """
         Return the modelled tidal height at given times.
-        Arguments:
-        t -- array of times at which to evaluate the tidal height
+        
+        Args:
+            t: Array of times at which to evaluate the tidal height
+            
+        Returns:
+            Array of tidal heights at the specified times
         """
         t0 = t[0]
         hours = self._hours(t0, t)
-        # t0 기준으로만 prepare
+        # Prepare using t0 as reference
         speed, u, f, V0 = self.prepare(t0, radians=True)
         H = self.model["amplitude"][:, np.newaxis]
         p = d2r * self.model["phase"][:, np.newaxis]
-        # u, f는 리스트에서 첫 번째 요소만 사용 (t0 기준)
+        # Use only first element from u, f lists (t0 reference)
         u_single = u[0] if isinstance(u, list) else u
         f_single = f[0] if isinstance(f, list) else f
         hours_array = np.array(hours).reshape(1, -1)
@@ -114,8 +142,12 @@ class Tide(object):
     def highs(self, *args):
         """
         Generator yielding only the high tides.
-        Arguments:
-        see Tide.extrema()
+        
+        Args:
+            *args: Arguments passed to Tide.extrema()
+            
+        Yields:
+            High tide extrema
         """
         for t in filter(lambda e: e[2] == "H", self.extrema(*args)):
             yield t
@@ -123,8 +155,12 @@ class Tide(object):
     def lows(self, *args):
         """
         Generator yielding only the low tides.
-        Arguments:
-        see Tide.extrema()
+        
+        Args:
+            *args: Arguments passed to Tide.extrema()
+            
+        Yields:
+            Low tide extrema
         """
         for t in filter(lambda e: e[2] == "L", self.extrema(*args)):
             yield t
@@ -132,6 +168,9 @@ class Tide(object):
     def form_number(self):
         """
         Returns the model's form number, a helpful heuristic for classifying tides.
+        
+        Returns:
+            Form number for tide classification
         """
         k1 = np.extract(
             self.model["constituent"] == constituent._K1, self.model["amplitude"]
@@ -146,7 +185,7 @@ class Tide(object):
             self.model["constituent"] == constituent._S2, self.model["amplitude"]
         )
 
-        # 각 조화분조가 없을 경우 0으로 처리
+        # Handle case where constituents are not present
         k1_val = k1[0] if len(k1) > 0 else 0.0
         o1_val = o1[0] if len(o1) > 0 else 0.0
         m2_val = m2[0] if len(m2) > 0 else 0.0
@@ -159,7 +198,10 @@ class Tide(object):
 
     def classify(self):
         """
-        Classify the tide according to its form number
+        Classify the tide according to its form number.
+        
+        Returns:
+            String classification of the tide type
         """
         form = self.form_number()
         if 0 <= form <= 0.25:
@@ -174,10 +216,14 @@ class Tide(object):
     def extrema(self, t0, t1=None, partition=2400.0):
         """
         A generator for high and low tides.
-        Arguments:
-        t0 -- time after which extrema are sought
-        t1 -- optional time before which extrema are sought (if not given, the generator is infinite)
-        partition -- number of hours for which we consider the node factors to be constant (default: 2400.0)
+        
+        Args:
+            t0: Time after which extrema are sought
+            t1: Optional time before which extrema are sought (if not given, the generator is infinite)
+            partition: Number of hours for which we consider the node factors to be constant (default: 2400.0)
+            
+        Yields:
+            Tuples of (time, height, type) where type is 'H' for high tide or 'L' for low tide
         """
         if t1:
             # yield from in python 3.4
@@ -245,9 +291,13 @@ class Tide(object):
     def _hours(t0, t):
         """
         Return the hourly offset(s) of a (list of) time from a given time.
-        Arguments:
-        t0 -- time from which offsets are sought
-        t -- times to find hourly offsets from t0.
+        
+        Args:
+            t0: Time from which offsets are sought
+            t: Times to find hourly offsets from t0.
+            
+        Returns:
+            Array of hourly offsets
         """
         if not isinstance(t, Iterable):
             return Tide._hours(t0, [t])[0]
@@ -260,9 +310,13 @@ class Tide(object):
     def _partition(hours, partition=3600.0):
         """
         Partition a sorted list of numbers (or in this case hours).
-        Arguments:
-        hours -- sorted ndarray of hours.
-        partition -- maximum partition length (default: 3600.0)
+        
+        Args:
+            hours: Sorted ndarray of hours.
+            partition: Maximum partition length (default: 3600.0)
+            
+        Returns:
+            List of partitioned hour arrays
         """
         partition = float(partition)
         relative = hours - hours[0]
@@ -278,9 +332,13 @@ class Tide(object):
     def _times(t0, hours):
         """
         Return a (list of) datetime(s) given an initial time and an (list of) hourly offset(s).
-        Arguments:
-        t0 -- initial time
-        hours -- hourly offsets from t0
+        
+        Args:
+            t0: Initial time
+            hours: Hourly offsets from t0
+            
+        Returns:
+            List of datetime objects
         """
         if not isinstance(hours, Iterable):
             return Tide._times(t0, [hours])[0]
@@ -291,40 +349,52 @@ class Tide(object):
 
     @staticmethod
     def _tidal_series(t, amplitude, phase, speed, u, f, V0):
-        # 벡터화된 조석 계산
-        # t: (1, n_times) - 시간 배열
-        # amplitude: (n_constituents, 1) - 진폭
-        # phase: (n_constituents, 1) - 위상
-        # speed: (n_constituents, 1) - 속도
-        # u, f, V0: (n_constituents, 1) - 노드 팩터들
+        """
+        Vectorized tidal calculation.
         
-        # 각 조화분조의 기여도 계산
+        Args:
+            t: (1, n_times) - Time array
+            amplitude: (n_constituents, 1) - Amplitude
+            phase: (n_constituents, 1) - Phase
+            speed: (n_constituents, 1) - Speed
+            u, f, V0: (n_constituents, 1) - Node factors
+            
+        Returns:
+            Array of tidal heights
+        """
+        # Calculate contribution of each constituent
         amplitude_f = amplitude * f  # (n_constituents, 1)
         
         # speed * t: (n_constituents, n_times)
-        speed_t = speed * t  # 브로드캐스팅
+        speed_t = speed * t  # Broadcasting
         
         # V0 + u - phase: (n_constituents, 1)
         angle_offset = V0 + u - phase
         
-        # cos 계산 - 브로드캐스팅으로 각 시간에 대해 계산
+        # Calculate cosine term - broadcasting for each time
         cos_term = np.cos(speed_t + angle_offset)
         
-        # 각 조화분조의 기여도 합산
+        # Sum contributions from each constituent
         result = np.sum(amplitude_f * cos_term, axis=0)
         
         return result
 
     @staticmethod
     def _tidal_series_single(t, amplitude, phase, speed, u, f, V0):
-        # 단일 시간에 대한 조석 계산
-        # t: 스칼라 - 시간
-        # amplitude: (n_constituents, 1) - 진폭
-        # phase: (n_constituents, 1) - 위상
-        # speed: (n_constituents, 1) - 속도
-        # u, f, V0: (n_constituents, 1) - 노드 팩터들
+        """
+        Single time tidal calculation.
         
-        # 각 조화분조의 기여도 계산
+        Args:
+            t: Scalar - Time
+            amplitude: (n_constituents, 1) - Amplitude
+            phase: (n_constituents, 1) - Phase
+            speed: (n_constituents, 1) - Speed
+            u, f, V0: (n_constituents, 1) - Node factors
+            
+        Returns:
+            Tidal height at the specified time
+        """
+        # Calculate contribution of each constituent
         amplitude_f = amplitude * f  # (n_constituents, 1)
         
         # speed * t: (n_constituents, 1)
@@ -333,20 +403,20 @@ class Tide(object):
         # V0 + u - phase: (n_constituents, 1)
         angle_offset = V0 + u - phase
         
-        # 최종 각도: speed * t + angle_offset
+        # Final angle: speed * t + angle_offset
         final_angle = speed_t + angle_offset
         
-        # cos 계산
+        # Calculate cosine term
         cos_term = np.cos(final_angle)
         
-        # 각 조화분조의 기여도 합산
+        # Sum contributions from each constituent
         result = np.sum(amplitude_f * cos_term)
         
         return result
 
     def normalize(self):
         """
-        Adapt self.model so that amplitudes are positive and phases are in [0,360) as per convention
+        Adapt self.model so that amplitudes are positive and phases are in [0,360) as per convention.
         """
         for i, (_, amplitude, phase) in enumerate(self.model):
             if amplitude < 0:
@@ -369,17 +439,20 @@ class Tide(object):
     ):
         """
         Return an instance of Tide which has been fitted to a series of tidal observations.
-        Arguments:
-        It is not necessary to provide t0 or interval if t is provided.
-        heights -- ndarray of tidal observation heights
-        t -- ndarray of tidal observation times
-        t0 -- datetime representing the time at which heights[0] was recorded
-        interval -- hourly interval between readings
-        constituents -- list of constituents to use in the fit (default: constituent.noaa)
-        initial -- optional Tide instance to use as first guess for least squares solver
-        n_period -- only include constituents which complete at least this many periods (default: 2)
-        callback -- optional function to be called at each iteration of the solver
-        full_output -- whether to return the output of scipy's leastsq solver (default: False)
+        
+        Args:
+            heights: Numpy array of tidal observation heights
+            t: Numpy array of tidal observation times
+            t0: Datetime representing the time at which heights[0] was recorded
+            interval: Hourly interval between readings
+            constituents: List of constituents to use in the fit (default: constituent.noaa)
+            initial: Optional Tide instance to use as first guess for least squares solver
+            n_period: Only include constituents which complete at least this many periods (default: 2)
+            callback: Optional function to be called at each iteration of the solver
+            full_output: Whether to return the output of scipy's leastsq solver (default: False)
+            
+        Returns:
+            Fitted Tide instance
         """
         if t is not None:
             if isinstance(t[0], datetime):
@@ -421,7 +494,7 @@ class Tide(object):
             ]
         n = len(constituents)
         
-        # 분조가 없는 경우 처리
+        # Handle case where no constituents are present
         if n == 0:
             if callback:
                 callback(heights)
@@ -500,7 +573,7 @@ class Tide(object):
 
         if initial is not None:
             initial_data = getattr(initial, 'model', initial)
-            # 초기 추정치에서 해당 분조들만 추출
+            # Extract corresponding constituents from initial guess
             initial_guess = []
             for c in constituents:
                 found = False
@@ -511,12 +584,12 @@ class Tide(object):
                         found = True
                         break
                 if not found:
-                    # 해당 분조가 없으면 기본값 사용
+                    # Use default values if constituent not found
                     initial_guess.append(amplitudes[len(initial_guess)//2])
                     initial_guess.append(phases[len(initial_guess)//2])
             initial = np.array(initial_guess, dtype=float)
         else:
-            # 기본값
+            # Default values
             initial = np.concatenate([amplitudes, phases])
 
         lsq = least_squares(residual, initial, jac='2-point', ftol=1e-7)

@@ -61,8 +61,20 @@ astro_dtype = np.dtype([
 # analysis.
 
 
-# Convert a sexagesimal angle into decimal degrees
 def s2d(degrees, arcmins=0.0, arcsecs=0.0, mas=0.0, muas=0.0):
+    """
+    Convert a sexagesimal angle into decimal degrees.
+    
+    Args:
+        degrees: Degrees component
+        arcmins: Arcminutes component (default: 0.0)
+        arcsecs: Arcseconds component (default: 0.0)
+        mas: Milliarcseconds component (default: 0.0)
+        muas: Microarcseconds component (default: 0.0)
+        
+    Returns:
+        Decimal degrees
+    """
     return np.float64(
         degrees
         + (arcmins / ARCMIN_PER_DEGREE)
@@ -72,8 +84,17 @@ def s2d(degrees, arcmins=0.0, arcsecs=0.0, mas=0.0, muas=0.0):
     )
 
 
-# Evaluate a polynomial at argument using NumPy's optimized polyval
 def polynomial(coefficients, argument):
+    """
+    Evaluate a polynomial at argument using NumPy's optimized polyval.
+    
+    Args:
+        coefficients: Polynomial coefficients
+        argument: Argument to evaluate polynomial at
+        
+    Returns:
+        Polynomial value
+    """
     result = np.polyval(coefficients[::-1], argument)
     if np.ndim(result) == 0:
         return result
@@ -82,8 +103,17 @@ def polynomial(coefficients, argument):
     return result
 
 
-# Evaluate the first derivative of a polynomial at argument using NumPy's optimized polyder
 def d_polynomial(coefficients, argument):
+    """
+    Evaluate the first derivative of a polynomial at argument using NumPy's optimized polyder.
+    
+    Args:
+        coefficients: Polynomial coefficients
+        argument: Argument to evaluate derivative at
+        
+    Returns:
+        Derivative value
+    """
     if len(coefficients) == 0:
         return 0.0 if np.ndim(argument) == 0 else np.zeros_like(argument, dtype=np.float64)
     # Use NumPy's polyder for derivative calculation
@@ -96,13 +126,29 @@ def d_polynomial(coefficients, argument):
     return result
 
 
-# Meeus formula 11.1
 def T(t):
+    """
+    Meeus formula 11.1 - Calculate Julian centuries since J2000.0.
+    
+    Args:
+        t: Datetime object
+        
+    Returns:
+        Julian centuries since J2000.0
+    """
     return np.float64((JD(t) - JULIAN_EPOCH) / JULIAN_CENTURY)
 
 
-# Meeus formula 7.1
 def JD(t):
+    """
+    Meeus formula 7.1 - Calculate Julian Day Number.
+    
+    Args:
+        t: Datetime object
+        
+    Returns:
+        Julian Day Number
+    """
     Y, M = t.year, t.month
     D = (
         t.day
@@ -184,17 +230,37 @@ lunar_perigee_coefficients = np.array((
 # Now follow some useful auxiliary values, we won't need their speed.
 # See notes on Table 6 in Schureman for I, nu, xi, nu', 2nu''
 def _I(N, i, omega):
-    """Calculate I parameter with vectorized operations."""
+    """
+    Calculate I parameter with vectorized operations.
+    
+    Args:
+        N: Lunar node longitude
+        i: Lunar inclination
+        omega: Terrestrial obliquity
+        
+    Returns:
+        I parameter value
+    """
     N, i, omega = d2r * N, d2r * i, d2r * omega
     # Use optimized NumPy trigonometric functions with vectorization
     cosI = np.cos(i) * np.cos(omega) - np.sin(i) * np.sin(omega) * np.cos(N)
-    # 수치 안정성 개선: np.clip 사용
+    # Improve numerical stability: use np.clip
     cosI = np.clip(cosI, -1.0, 1.0)
     return r2d * np.arccos(cosI)
 
 
 def _xi(N, i, omega):
-    """Calculate xi parameter with vectorized operations."""
+    """
+    Calculate xi parameter with vectorized operations.
+    
+    Args:
+        N: Lunar node longitude
+        i: Lunar inclination
+        omega: Terrestrial obliquity
+        
+    Returns:
+        xi parameter value
+    """
     N, i, omega = d2r * N, d2r * i, d2r * omega
     # Use optimized NumPy trigonometric functions with better numerical stability
     omega_minus_i = omega - i
@@ -207,14 +273,14 @@ def _xi(N, i, omega):
     sin_half_omega_plus_i = np.sin(0.5 * omega_plus_i)
     tan_half_N = np.tan(half_N)
     
-    # 수치 안정성 개선: 분모가 0이 되지 않도록
+    # Improve numerical stability: prevent division by zero
     cos_half_omega_plus_i = np.where(np.abs(cos_half_omega_plus_i) < 1e-10, 1e-10, cos_half_omega_plus_i)
     sin_half_omega_plus_i = np.where(np.abs(sin_half_omega_plus_i) < 1e-10, 1e-10, sin_half_omega_plus_i)
     
     e1 = (cos_half_omega_minus_i / cos_half_omega_plus_i) * tan_half_N
     e2 = (sin_half_omega_minus_i / sin_half_omega_plus_i) * tan_half_N
     
-    # 수치 안정성 개선
+    # Improve numerical stability
     e1 = np.clip(e1, -1e10, 1e10)
     e2 = np.clip(e2, -1e10, 1e10)
     
@@ -223,7 +289,17 @@ def _xi(N, i, omega):
 
 
 def _nu(N, i, omega):
-    """Calculate nu parameter with vectorized operations."""
+    """
+    Calculate nu parameter with vectorized operations.
+    
+    Args:
+        N: Lunar node longitude
+        i: Lunar inclination
+        omega: Terrestrial obliquity
+        
+    Returns:
+        nu parameter value
+    """
     N, i, omega = d2r * N, d2r * i, d2r * omega
     # Use optimized NumPy trigonometric functions with better numerical stability
     omega_minus_i = omega - i
@@ -236,14 +312,14 @@ def _nu(N, i, omega):
     sin_half_omega_plus_i = np.sin(0.5 * omega_plus_i)
     tan_half_N = np.tan(half_N)
     
-    # 수치 안정성 개선: 분모가 0이 되지 않도록
+    # Improve numerical stability: prevent division by zero
     cos_half_omega_plus_i = np.where(np.abs(cos_half_omega_plus_i) < 1e-10, 1e-10, cos_half_omega_plus_i)
     sin_half_omega_plus_i = np.where(np.abs(sin_half_omega_plus_i) < 1e-10, 1e-10, sin_half_omega_plus_i)
     
     e1 = (cos_half_omega_minus_i / cos_half_omega_plus_i) * tan_half_N
     e2 = (sin_half_omega_minus_i / sin_half_omega_plus_i) * tan_half_N
     
-    # 수치 안정성 개선
+    # Improve numerical stability
     e1 = np.clip(e1, -1e10, 1e10)
     e2 = np.clip(e2, -1e10, 1e10)
     
@@ -252,7 +328,17 @@ def _nu(N, i, omega):
 
 
 def _nup(N, i, omega):
-    """Calculate nup parameter with vectorized operations."""
+    """
+    Calculate nup parameter with vectorized operations.
+    
+    Args:
+        N: Lunar node longitude
+        i: Lunar inclination
+        omega: Terrestrial obliquity
+        
+    Returns:
+        nup parameter value
+    """
     N, i, omega = d2r * N, d2r * i, d2r * omega
     # Use optimized NumPy trigonometric functions
     result = r2d * (np.arctan(np.sin(omega) * np.tan(N)))
@@ -260,7 +346,17 @@ def _nup(N, i, omega):
 
 
 def _nupp(N, i, omega):
-    """Calculate nupp parameter with vectorized operations."""
+    """
+    Calculate nupp parameter with vectorized operations.
+    
+    Args:
+        N: Lunar node longitude
+        i: Lunar inclination
+        omega: Terrestrial obliquity
+        
+    Returns:
+        nupp parameter value
+    """
     N, i, omega = d2r * N, d2r * i, d2r * omega
     # Use optimized NumPy trigonometric functions
     result = r2d * (np.arctan(np.sin(omega) * np.tan(2 * N)))
@@ -268,68 +364,80 @@ def _nupp(N, i, omega):
 
 
 def create_astro_array():
-    """Create a structured array for astronomical parameters."""
+    """
+    Create a structured array for astronomical parameters.
+    
+    Returns:
+        Zero-initialized structured array
+    """
     return np.zeros(1, dtype=astro_dtype)
 
 
 def astro(t):
     """
     Return the astronomical parameters at time t.
+    
     Optimized version with better memory efficiency and numerical stability.
+    
+    Args:
+        t: Datetime object or list of datetime objects
+        
+    Returns:
+        Dictionary of astronomical parameters
     """
-    # 벡터화 연산을 위해 단일 시간을 배열로 처리
+    # Vectorize operations by treating single time as array
     if not hasattr(t, '__iter__'):
         t = [t]
     
-    # 시간을 NumPy 배열로 변환
+    # Convert times to NumPy array
     t_array = np.asarray([T(t_i) for t_i in t], dtype=np.float64)
     
-    # 벡터화된 계산
+    # Vectorized calculations
     s = polynomial(solar_longitude_coefficients, t_array)
     h = polynomial(lunar_longitude_coefficients, t_array)
     p = polynomial(lunar_perigee_coefficients, t_array)
     N = polynomial(lunar_node_coefficients, t_array)
     pp = polynomial(solar_perigee_coefficients, t_array)
     
-    # 수치 안정성 개선
+    # Improve numerical stability
     s = np.mod(s, 360.0)
     h = np.mod(h, 360.0)
     p = np.mod(p, 360.0)
     N = np.mod(N, 360.0)
     pp = np.mod(pp, 360.0)
     
-    # 천문학적 매개변수 계산
+    # Calculate astronomical parameters
     omega = polynomial(terrestrial_obliquity_coefficients_adjusted, t_array)
     i = polynomial(lunar_inclination_coefficients, t_array)
     
-    # 수치 안정성 개선
+    # Improve numerical stability
     omega = np.clip(omega, 0.0, 360.0)
     i = np.clip(i, 0.0, 360.0)
     
-    # 보조 매개변수 계산 (벡터화)
+    # Calculate auxiliary parameters (vectorized)
     I = _I(N, i, omega)
     xi = _xi(N, i, omega)
     nu = _nu(N, i, omega)
     nup = _nup(N, i, omega)
     nupp = _nupp(N, i, omega)
     
-    # 속도 계산 (벡터화) - Julian Century당 각도를 시간당 각도로 변환
+    # Calculate speeds (vectorized) - convert Julian Century angles to hourly angles
     s_speed = d_polynomial(solar_longitude_coefficients, t_array) / (JULIAN_CENTURY * 24.0)
     h_speed = d_polynomial(lunar_longitude_coefficients, t_array) / (JULIAN_CENTURY * 24.0)
     p_speed = d_polynomial(lunar_perigee_coefficients, t_array) / (JULIAN_CENTURY * 24.0)
     N_speed = d_polynomial(lunar_node_coefficients, t_array) / (JULIAN_CENTURY * 24.0)
     pp_speed = d_polynomial(solar_perigee_coefficients, t_array) / (JULIAN_CENTURY * 24.0)
     
-    # 수치 안정성 개선 - 천문학적 속도는 일반적으로 작은 값들
+    # Improve numerical stability - astronomical speeds are generally small values
     s_speed = np.clip(s_speed, -10.0, 10.0)
     h_speed = np.clip(h_speed, -10.0, 10.0)
     p_speed = np.clip(p_speed, -10.0, 10.0)
     N_speed = np.clip(N_speed, -10.0, 10.0)
     pp_speed = np.clip(pp_speed, -10.0, 10.0)
     
-    # 결과 생성
+    # Generate results
     if len(t) == 1:
-        # 단일 시간인 경우
+        # Single time case
         s_val = float(s.item() if hasattr(s, 'item') else s)
         h_val = float(h.item() if hasattr(h, 'item') else h)
         p_val = float(p.item() if hasattr(p, 'item') else p)
@@ -362,15 +470,15 @@ def astro(t):
             'nu': AstronomicalParameter(nu_val, 0.0),
             'nup': AstronomicalParameter(nup_val, 0.0),
             'nupp': AstronomicalParameter(nupp_val, 0.0),
-            # T+h-s 계산 수정
+            # T+h-s calculation correction
             'T+h-s': AstronomicalParameter(
                 ( ((JD(t[0]) - int(JD(t[0]))) * 360.0 + h_val - s_val) % 360.0 ),
-                (15.0 + h_speed_val - s_speed_val)  # T의 속도는 15도/시간
+                (15.0 + h_speed_val - s_speed_val)  # T speed is 15 degrees/hour
             ),
             'P': AstronomicalParameter(p_val, p_speed_val)
         }
     else:
-        # 여러 시간인 경우
+        # Multiple times case
         result = {}
         for idx, t_i in enumerate(t):
             s_val = float(s[idx].item() if hasattr(s[idx], 'item') else s[idx])
@@ -416,59 +524,66 @@ def astro(t):
 
 def vectorized_astro(times):
     """
-    벡터화된 천문학적 매개변수 계산
-    대용량 데이터 처리에 최적화된 버전
+    Vectorized astronomical parameter calculation.
+    
+    Optimized version for large-scale data processing.
+    
+    Args:
+        times: Array of datetime objects
+        
+    Returns:
+        Structured array of astronomical parameters
     """
     if not isinstance(times, np.ndarray):
         times = np.asarray(times)
     
-    # 시간을 Julian Day로 변환
+    # Convert times to Julian Day
     T_array = np.asarray([T(t) for t in times], dtype=np.float64)
     
-    # 벡터화된 계산
+    # Vectorized calculations
     s = polynomial(solar_longitude_coefficients, T_array)
     h = polynomial(lunar_longitude_coefficients, T_array)
     p = polynomial(lunar_perigee_coefficients, T_array)
     N = polynomial(lunar_node_coefficients, T_array)
     pp = polynomial(solar_perigee_coefficients, T_array)
     
-    # 수치 안정성 개선
+    # Improve numerical stability
     s = np.mod(s, 360.0)
     h = np.mod(h, 360.0)
     p = np.mod(p, 360.0)
     N = np.mod(N, 360.0)
     pp = np.mod(pp, 360.0)
     
-    # 천문학적 매개변수 계산
+    # Calculate astronomical parameters
     omega = polynomial(terrestrial_obliquity_coefficients_adjusted, T_array)
     i = polynomial(lunar_inclination_coefficients, T_array)
     
-    # 수치 안정성 개선
+    # Improve numerical stability
     omega = np.clip(omega, 0.0, 360.0)
     i = np.clip(i, 0.0, 360.0)
     
-    # 보조 매개변수 계산 (벡터화)
+    # Calculate auxiliary parameters (vectorized)
     I = _I(N, i, omega)
     xi = _xi(N, i, omega)
     nu = _nu(N, i, omega)
     nup = _nup(N, i, omega)
     nupp = _nupp(N, i, omega)
     
-    # 속도 계산 (벡터화) - Julian Century당 각도를 시간당 각도로 변환
+    # Calculate speeds (vectorized) - convert Julian Century angles to hourly angles
     s_speed = d_polynomial(solar_longitude_coefficients, T_array) / (JULIAN_CENTURY * 24.0)
     h_speed = d_polynomial(lunar_longitude_coefficients, T_array) / (JULIAN_CENTURY * 24.0)
     p_speed = d_polynomial(lunar_perigee_coefficients, T_array) / (JULIAN_CENTURY * 24.0)
     N_speed = d_polynomial(lunar_node_coefficients, T_array) / (JULIAN_CENTURY * 24.0)
     pp_speed = d_polynomial(solar_perigee_coefficients, T_array) / (JULIAN_CENTURY * 24.0)
     
-    # 수치 안정성 개선 - 천문학적 속도는 일반적으로 작은 값들
+    # Improve numerical stability - astronomical speeds are generally small values
     s_speed = np.clip(s_speed, -10.0, 10.0)
     h_speed = np.clip(h_speed, -10.0, 10.0)
     p_speed = np.clip(p_speed, -10.0, 10.0)
     N_speed = np.clip(N_speed, -10.0, 10.0)
     pp_speed = np.clip(pp_speed, -10.0, 10.0)
     
-    # 결과를 구조화된 배열로 반환
+    # Return results as structured array
     result = np.zeros(len(times), dtype=astro_dtype)
     
     result['s']['value'] = s
@@ -497,7 +612,7 @@ def vectorized_astro(times):
     result['nup']['speed'] = 0.0
     result['nupp']['value'] = nupp
     result['nupp']['speed'] = 0.0
-    # T+h-s 계산: T는 시간의 각도
+    # T+h-s calculation: T is the angle of time
     T_values = np.array([((JD(t) - int(JD(t))) * 360.0) % 360.0 for t in times])
     result['T+h-s']['value'] = (T_values + h - s) % 360.0
     result['T+h-s']['speed'] = 15.0 + h_speed - s_speed
@@ -509,8 +624,16 @@ def vectorized_astro(times):
 
 def vectorized_polynomial(coefficients, arguments):
     """
-    벡터화된 다항식 계산
-    대용량 데이터 처리에 최적화
+    Vectorized polynomial calculation.
+    
+    Optimized for large-scale data processing.
+    
+    Args:
+        coefficients: Polynomial coefficients
+        arguments: Arguments to evaluate polynomial at
+        
+    Returns:
+        Polynomial values
     """
     result = np.polyval(coefficients[::-1], arguments)
     if np.ndim(result) == 0:
@@ -522,8 +645,16 @@ def vectorized_polynomial(coefficients, arguments):
 
 def vectorized_d_polynomial(coefficients, arguments):
     """
-    벡터화된 다항식 미분 계산
-    대용량 데이터 처리에 최적화
+    Vectorized polynomial derivative calculation.
+    
+    Optimized for large-scale data processing.
+    
+    Args:
+        coefficients: Polynomial coefficients
+        arguments: Arguments to evaluate derivative at
+        
+    Returns:
+        Derivative values
     """
     if len(coefficients) == 0:
         return np.zeros_like(arguments, dtype=np.float64)

@@ -7,6 +7,12 @@ import pytidespy3.nodal_corrections as nc
 
 
 class BaseConstituent(object):
+    """
+    Base class for tidal constituents.
+    
+    This class represents a tidal constituent with its coefficients,
+    name, and nodal correction functions.
+    """
     __slots__ = ['coefficients', 'name', 'u', 'f']
     
     xdo_int = {
@@ -19,6 +25,16 @@ class BaseConstituent(object):
     int_xdo = {v: k for k, v in xdo_int.items()}
 
     def __init__(self, name, xdo='', coefficients=[], u=nc.u_zero, f=nc.f_unity):
+        """
+        Initialize a tidal constituent.
+        
+        Args:
+            name: Name of the constituent
+            xdo: XDO string representation (default: '')
+            coefficients: List of coefficients (default: [])
+            u: Node factor u function (default: nc.u_zero)
+            f: Node factor f function (default: nc.f_unity)
+        """
         if xdo == '':
             self.coefficients = np.asarray(coefficients, dtype=np.float64)
         else:
@@ -28,44 +44,141 @@ class BaseConstituent(object):
         self.f = f
 
     def xdo_to_coefficients(self, xdo):
+        """
+        Convert XDO string to coefficient list.
+        
+        Args:
+            xdo: XDO string representation
+            
+        Returns:
+            List of coefficients
+        """
         return [self.xdo_int[l.upper()] for l in xdo if l in string.ascii_letters]
 
     def coefficients_to_xdo(self, coefficients):
+        """
+        Convert coefficient list to XDO string.
+        
+        Args:
+            coefficients: List of coefficients
+            
+        Returns:
+            XDO string representation
+        """
         result = ''.join([self.int_xdo[c] for c in coefficients])
         if len(result) >= 7:
             return result[0] + ' ' + result[1:4] + ' ' + result[4:7]
         return result
 
     def V(self, astro):
+        """
+        Calculate equilibrium argument.
+        
+        Args:
+            astro: Astronomical parameters
+            
+        Returns:
+            Equilibrium argument in degrees
+        """
         return np.mod(self.coefficients @ self.astro_values(astro), 360.0)
 
     def xdo(self):
+        """
+        Get XDO string representation.
+        
+        Returns:
+            XDO string
+        """
         return self.coefficients_to_xdo(self.coefficients)
 
     def speed(self, a):
+        """
+        Calculate constituent speed.
+        
+        Args:
+            a: Astronomical parameters
+            
+        Returns:
+            Speed in degrees per hour
+        """
         return self.coefficients @ self.astro_speeds(a)
 
     def astro_xdo(self, a):
+        """
+        Get astronomical parameters for XDO calculation.
+        
+        Args:
+            a: Astronomical parameters dictionary
+            
+        Returns:
+            List of astronomical parameters
+        """
         return [a['T+h-s'], a['s'], a['h'], a['p'], a['N'], a['pp'], a['90']]
 
     def astro_speeds(self, a):
+        """
+        Get astronomical parameter speeds.
+        
+        Args:
+            a: Astronomical parameters dictionary
+            
+        Returns:
+            Array of speeds
+        """
         return np.asarray([each.speed for each in self.astro_xdo(a)], dtype=np.float64)
 
     def astro_values(self, a):
+        """
+        Get astronomical parameter values.
+        
+        Args:
+            a: Astronomical parameters dictionary
+            
+        Returns:
+            Array of values
+        """
         return np.asarray([each.value for each in self.astro_xdo(a)], dtype=np.float64)
 
     # Consider two out of phase constituents which travel at the same speed to
     # be identical
     def __eq__(self, c):
+        """
+        Check if two constituents are equal.
+        
+        Args:
+            c: Another constituent
+            
+        Returns:
+            True if constituents are equal
+        """
         return np.all(self.coefficients[:-1] == c.coefficients[:-1])
 
     def __hash__(self):
+        """
+        Get hash of constituent.
+        
+        Returns:
+            Hash value
+        """
         return hash(tuple(self.coefficients[:-1]))
 
 
 class CompoundConstituent(BaseConstituent):
+    """
+    Compound tidal constituent.
+    
+    This class represents a compound constituent made up of multiple
+    base constituents with different weights.
+    """
 
     def __init__(self, members=[], **kwargs):
+        """
+        Initialize a compound constituent.
+        
+        Args:
+            members: List of (constituent, weight) tuples
+            **kwargs: Additional arguments passed to BaseConstituent
+        """
         self.members = members
 
         if 'u' not in kwargs:
@@ -75,19 +188,55 @@ class CompoundConstituent(BaseConstituent):
 
         super(CompoundConstituent, self).__init__(**kwargs)
 
-        # 벡터화 연산으로 coefficients 계산 최적화
+        # Optimize coefficient calculation with vectorized operations
         self.coefficients = reduce(op.add, [c.coefficients * n for (c, n) in members])
 
     def speed(self, a):
+        """
+        Calculate compound constituent speed.
+        
+        Args:
+            a: Astronomical parameters
+            
+        Returns:
+            Speed in degrees per hour
+        """
         return reduce(op.add, [n * c.speed(a) for (c, n) in self.members])
 
     def V(self, a):
+        """
+        Calculate compound constituent equilibrium argument.
+        
+        Args:
+            a: Astronomical parameters
+            
+        Returns:
+            Equilibrium argument in degrees
+        """
         return reduce(op.add, [n * c.V(a) for (c, n) in self.members])
 
     def u(self, a):
+        """
+        Calculate compound constituent node factor u.
+        
+        Args:
+            a: Astronomical parameters
+            
+        Returns:
+            Node factor u
+        """
         return reduce(op.add, [n * c.u(a) for (c, n) in self.members])
 
     def f(self, a):
+        """
+        Calculate compound constituent node factor f.
+        
+        Args:
+            a: Astronomical parameters
+            
+        Returns:
+            Node factor f
+        """
         return reduce(op.mul, [c.f(a) ** abs(n) for (c, n) in self.members])
 
 
