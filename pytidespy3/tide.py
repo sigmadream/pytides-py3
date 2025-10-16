@@ -573,20 +573,18 @@ class Tide(object):
 
         if initial is not None:
             initial_data = getattr(initial, 'model', initial)
-            # Extract corresponding constituents from initial guess
+            lookup = {
+                c0: (amplitude, phase)
+                for c0, amplitude, phase in initial_data
+            }
             initial_guess = []
-            for c in constituents:
-                found = False
-                for c0, amplitude, phase in initial_data:
-                    if c0 == c:
-                        initial_guess.append(amplitude)
-                        initial_guess.append(phase)
-                        found = True
-                        break
-                if not found:
-                    # Use default values if constituent not found
-                    initial_guess.append(amplitudes[len(initial_guess)//2])
-                    initial_guess.append(phases[len(initial_guess)//2])
+            for idx, c in enumerate(constituents):
+                if c in lookup:
+                    amp, phs = lookup[c]
+                else:
+                    amp = amplitudes[idx]
+                    phs = phases[idx]
+                initial_guess.extend([amp, phs])
             initial = np.array(initial_guess, dtype=float)
         else:
             # Default values

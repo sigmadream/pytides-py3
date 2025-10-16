@@ -18,7 +18,7 @@ python -m unittest discover -s tests
 
 ## 기술적 요구사항:
 
-- Python >= 3.10.x
+- Python >= 3.11.x
 - NumPy >= 1.8
 - SciPy >= 0.11
 
@@ -40,4 +40,3 @@ Pytides is small Python package for the analysis and prediction of tides. Pytide
 It is recommended that all interactions with pytides which require times to be specified are in the format of naive UTC datetime instances. In particular, note that pytides makes no adjustment for summertime or any other civil variations within timezones. 
 
 For more information, please see http://github.com/sam-cox/pytides and https://github.com/sigmadream/pytides
-

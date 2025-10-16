@@ -5,6 +5,7 @@ import pytidespy3.tide as tide
 import pytidespy3.constituent as constituent
 import pytidespy3.astro
 import pytidespy3.nodal_corrections as nc
+from pytidespy3.astro import AstronomicalParameters
 
 
 class TestIntegration(unittest.TestCase):
@@ -17,7 +18,7 @@ class TestIntegration(unittest.TestCase):
     def test_full_tide_analysis_workflow(self):
         """Test complete tidal analysis workflow."""
         astro_data = pytidespy3.astro.astro(self.test_time)
-        self.assertIsInstance(astro_data, dict)
+        self.assertIsInstance(astro_data, AstronomicalParameters)
 
         constituents = [constituent._M2, constituent._S2, constituent._K1]
         self.assertEqual(len(constituents), 3)

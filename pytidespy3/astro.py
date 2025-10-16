@@ -1,12 +1,50 @@
-from collections import namedtuple
 import numpy as np
+from collections.abc import Iterable
+from datetime import datetime
 
 # Define AstronomicalParameter class for compatibility with existing tests
 class AstronomicalParameter:
-    """Class to represent astronomical parameters with value and speed."""
-    def __init__(self, value: float, speed: float):
+    """Class to represent astronomical parameters with value (scalar or array) and speed."""
+    def __init__(self, value, speed):
         self.value = value
         self.speed = speed
+
+
+class AstronomicalParameters(dict):
+    """
+    Mapping of astronomical parameter names to AstronomicalParameter instances.
+
+    The `times` attribute stores the datetime sequence used to generate the parameters.
+    Use `for_time(index)` to retrieve a single-time view when multiple times were supplied.
+    """
+
+    def __init__(self, parameters, times):
+        super().__init__(parameters)
+        self.times = tuple(times)
+
+    def for_time(self, index):
+        """
+        Return an AstronomicalParameters instance for a specific time index.
+
+        Args:
+            index: Integer index into the stored times sequence.
+
+        Returns:
+            AstronomicalParameters populated with scalar values for the requested time.
+        """
+        if not self.times:
+            raise IndexError("No time information stored.")
+        if not (0 <= index < len(self.times)):
+            raise IndexError(f"Time index {index} out of range for {len(self.times)} stored times.")
+
+        single_parameters = {
+            name: AstronomicalParameter(
+                np.asarray(param.value, dtype=np.float64)[index],
+                np.asarray(param.speed, dtype=np.float64)[index],
+            )
+            for name, param in self.items()
+        }
+        return AstronomicalParameters(single_parameters, [self.times[index]])
 
 # Use NumPy mathematical constants for better precision and consistency
 d2r = np.float64(np.pi / 180.0)
@@ -380,17 +418,28 @@ def astro(t):
     Optimized version with better memory efficiency and numerical stability.
     
     Args:
-        t: Datetime object or list of datetime objects
+        t: Datetime object or iterable of datetime objects
         
     Returns:
-        Dictionary of astronomical parameters
+        AstronomicalParameters mapping names to AstronomicalParameter instances. When
+        multiple times are supplied, each parameter stores NumPy arrays and the returned
+        object retains the originating `times`.
     """
-    # Vectorize operations by treating single time as array
-    if not hasattr(t, '__iter__'):
-        t = [t]
+    if isinstance(t, datetime):
+        times = [t]
+    elif isinstance(t, Iterable) and not isinstance(t, (str, bytes)):
+        times = list(t)
+        if not times:
+            raise ValueError("astro() requires at least one datetime when an iterable is provided.")
+        for idx, each in enumerate(times):
+            if not isinstance(each, datetime):
+                raise TypeError(f"astro() expects datetime instances; element {idx} has type {type(each)!r}.")
+    else:
+        times = [t]
     
-    # Convert times to NumPy array
-    t_array = np.asarray([T(t_i) for t_i in t], dtype=np.float64)
+    # Convert times to NumPy arrays
+    t_array = np.asarray([T(t_i) for t_i in times], dtype=np.float64)
+    jd_array = np.asarray([JD(t_i) for t_i in times], dtype=np.float64)
     
     # Vectorized calculations
     s = polynomial(solar_longitude_coefficients, t_array)
@@ -436,90 +485,40 @@ def astro(t):
     pp_speed = np.clip(pp_speed, -10.0, 10.0)
     
     # Generate results
-    if len(t) == 1:
-        # Single time case
-        s_val = float(s.item() if hasattr(s, 'item') else s)
-        h_val = float(h.item() if hasattr(h, 'item') else h)
-        p_val = float(p.item() if hasattr(p, 'item') else p)
-        N_val = float(N.item() if hasattr(N, 'item') else N)
-        pp_val = float(pp.item() if hasattr(pp, 'item') else pp)
-        omega_val = float(omega.item() if hasattr(omega, 'item') else omega)
-        i_val = float(i.item() if hasattr(i, 'item') else i)
-        I_val = float(I.item() if hasattr(I, 'item') else I)
-        xi_val = float(xi.item() if hasattr(xi, 'item') else xi)
-        nu_val = float(nu.item() if hasattr(nu, 'item') else nu)
-        nup_val = float(nup.item() if hasattr(nup, 'item') else nup)
-        nupp_val = float(nupp.item() if hasattr(nupp, 'item') else nupp)
-        s_speed_val = float(s_speed.item() if hasattr(s_speed, 'item') else s_speed)
-        h_speed_val = float(h_speed.item() if hasattr(h_speed, 'item') else h_speed)
-        p_speed_val = float(p_speed.item() if hasattr(p_speed, 'item') else p_speed)
-        N_speed_val = float(N_speed.item() if hasattr(N_speed, 'item') else N_speed)
-        pp_speed_val = float(pp_speed.item() if hasattr(pp_speed, 'item') else pp_speed)
-        
-        return {
-            's': AstronomicalParameter(s_val, s_speed_val),
-            'h': AstronomicalParameter(h_val, h_speed_val),
-            'p': AstronomicalParameter(p_val, p_speed_val),
-            'N': AstronomicalParameter(N_val, N_speed_val),
-            'pp': AstronomicalParameter(pp_val, pp_speed_val),
-            '90': AstronomicalParameter(90.0, 0.0),
-            'omega': AstronomicalParameter(omega_val, 0.0),
-            'i': AstronomicalParameter(i_val, 0.0),
-            'I': AstronomicalParameter(I_val, 0.0),
-            'xi': AstronomicalParameter(xi_val, 0.0),
-            'nu': AstronomicalParameter(nu_val, 0.0),
-            'nup': AstronomicalParameter(nup_val, 0.0),
-            'nupp': AstronomicalParameter(nupp_val, 0.0),
-            # T+h-s calculation correction
-            'T+h-s': AstronomicalParameter(
-                ( ((JD(t[0]) - int(JD(t[0]))) * 360.0 + h_val - s_val) % 360.0 ),
-                (15.0 + h_speed_val - s_speed_val)  # T speed is 15 degrees/hour
-            ),
-            'P': AstronomicalParameter(p_val, p_speed_val)
+    t_plus_h_minus_s = np.mod(((jd_array - np.floor(jd_array)) * 360.0) + h - s, 360.0)
+    t_plus_h_minus_s_speed = 15.0 + h_speed - s_speed
+
+    parameters = {
+        's': AstronomicalParameter(s, s_speed),
+        'h': AstronomicalParameter(h, h_speed),
+        'p': AstronomicalParameter(p, p_speed),
+        'N': AstronomicalParameter(N, N_speed),
+        'pp': AstronomicalParameter(pp, pp_speed),
+        '90': AstronomicalParameter(np.full_like(s, 90.0), np.zeros_like(s_speed)),
+        'omega': AstronomicalParameter(omega, np.zeros_like(s_speed)),
+        'i': AstronomicalParameter(i, np.zeros_like(s_speed)),
+        'I': AstronomicalParameter(I, np.zeros_like(s_speed)),
+        'xi': AstronomicalParameter(xi, np.zeros_like(s_speed)),
+        'nu': AstronomicalParameter(nu, np.zeros_like(s_speed)),
+        'nup': AstronomicalParameter(nup, np.zeros_like(s_speed)),
+        'nupp': AstronomicalParameter(nupp, np.zeros_like(s_speed)),
+        'T+h-s': AstronomicalParameter(t_plus_h_minus_s, t_plus_h_minus_s_speed),
+        'P': AstronomicalParameter(p, p_speed),
+    }
+
+    result = AstronomicalParameters(parameters, times)
+
+    if len(times) == 1:
+        single_parameters = {
+            name: AstronomicalParameter(
+                float(np.asarray(param.value).item()),
+                float(np.asarray(param.speed).item()),
+            )
+            for name, param in result.items()
         }
-    else:
-        # Multiple times case
-        result = {}
-        for idx, t_i in enumerate(t):
-            s_val = float(s[idx].item() if hasattr(s[idx], 'item') else s[idx])
-            h_val = float(h[idx].item() if hasattr(h[idx], 'item') else h[idx])
-            p_val = float(p[idx].item() if hasattr(p[idx], 'item') else p[idx])
-            N_val = float(N[idx].item() if hasattr(N[idx], 'item') else N[idx])
-            pp_val = float(pp[idx].item() if hasattr(pp[idx], 'item') else pp[idx])
-            omega_val = float(omega[idx].item() if hasattr(omega[idx], 'item') else omega[idx])
-            i_val = float(i[idx].item() if hasattr(i[idx], 'item') else i[idx])
-            I_val = float(I[idx].item() if hasattr(I[idx], 'item') else I[idx])
-            xi_val = float(xi[idx].item() if hasattr(xi[idx], 'item') else xi[idx])
-            nu_val = float(nu[idx].item() if hasattr(nu[idx], 'item') else nu[idx])
-            nup_val = float(nup[idx].item() if hasattr(nup[idx], 'item') else nup[idx])
-            nupp_val = float(nupp[idx].item() if hasattr(nupp[idx], 'item') else nupp[idx])
-            s_speed_val = float(s_speed[idx].item() if hasattr(s_speed[idx], 'item') else s_speed[idx])
-            h_speed_val = float(h_speed[idx].item() if hasattr(h_speed[idx], 'item') else h_speed[idx])
-            p_speed_val = float(p_speed[idx].item() if hasattr(p_speed[idx], 'item') else p_speed[idx])
-            N_speed_val = float(N_speed[idx].item() if hasattr(N_speed[idx], 'item') else N_speed[idx])
-            pp_speed_val = float(pp_speed[idx].item() if hasattr(pp_speed[idx], 'item') else pp_speed[idx])
-            
-            result[t_i] = {
-                's': AstronomicalParameter(s_val, s_speed_val),
-                'h': AstronomicalParameter(h_val, h_speed_val),
-                'p': AstronomicalParameter(p_val, p_speed_val),
-                'N': AstronomicalParameter(N_val, N_speed_val),
-                'pp': AstronomicalParameter(pp_val, pp_speed_val),
-                '90': AstronomicalParameter(90.0, 0.0),
-                'omega': AstronomicalParameter(omega_val, 0.0),
-                'i': AstronomicalParameter(i_val, 0.0),
-                'I': AstronomicalParameter(I_val, 0.0),
-                'xi': AstronomicalParameter(xi_val, 0.0),
-                'nu': AstronomicalParameter(nu_val, 0.0),
-                'nup': AstronomicalParameter(nup_val, 0.0),
-                'nupp': AstronomicalParameter(nupp_val, 0.0),
-                'T+h-s': AstronomicalParameter(
-                ((JD(t_i) - int(JD(t_i))) * 360.0 + h_val - s_val) % 360.0,
-                15.0 + h_speed_val - s_speed_val
-            ),
-                'P': AstronomicalParameter(p_val, p_speed_val)
-            }
-        return result
+        return AstronomicalParameters(single_parameters, times)
+
+    return result
 
 
 def vectorized_astro(times):

@@ -382,6 +382,43 @@ class TestTide(unittest.TestCase):
 
         self.assertEqual(classification1, classification2)
 
+    def test_prediction_matches_golden_data(self):
+        """Compare tidal predictions and extrema against golden data."""
+        base_time = datetime(2023, 1, 1, 0, 0, 0)
+        sample_hours = list(range(0, 49, 6))
+        sample_times = [base_time + timedelta(hours=h) for h in sample_hours]
+        expected_heights = np.array([
+            -0.454621527604,
+            0.730974869360,
+            -0.396309113917,
+            -0.098231337180,
+            0.006765310351,
+            0.307388491194,
+            -0.058753908925,
+            -0.477433853629,
+            0.481880495855,
+        ])
+
+        heights = self.tide_model.at(sample_times)
+        np.testing.assert_allclose(heights, expected_heights, atol=1e-9)
+
+        expected_extrema = [
+            (datetime(2023, 1, 1, 3, 44, 1, 302107), 1.731447087847, "H"),
+            (datetime(2023, 1, 1, 9, 43, 14, 339142), -1.320245792967, "L"),
+            (datetime(2023, 1, 1, 15, 18, 5, 761490), 1.159819029553, "H"),
+            (datetime(2023, 1, 1, 21, 3, 14, 812091), -1.598488864063, "L"),
+            (datetime(2023, 1, 2, 3, 10, 54, 840221), 1.778754513583, "H"),
+            (datetime(2023, 1, 2, 9, 11, 25, 125081), -1.369550218609, "L"),
+        ]
+
+        extrema = list(self.tide_model.extrema(base_time, base_time + timedelta(days=2)))
+        self.assertGreaterEqual(len(extrema), len(expected_extrema))
+
+        for (time, height, kind), (expected_time, expected_height, expected_kind) in zip(extrema, expected_extrema):
+            self.assertAlmostEqual((time - expected_time).total_seconds(), 0.0, places=6)
+            self.assertAlmostEqual(height, expected_height, places=9)
+            self.assertEqual(kind, expected_kind)
+
     def test_extrema_ordering(self):
         """Test extrema time ordering."""
         t0 = self.test_time
