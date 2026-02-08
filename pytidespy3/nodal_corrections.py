@@ -1,0 +1,454 @@
+import numpy as np
+
+d2r, r2d = np.pi / 180.0, 180.0 / np.pi
+
+
+# The following functions take a dictionary of astronomical values (in degrees)
+# and return dimensionless scale factors for constituent amplitudes.
+
+def f_unity(a):
+    """
+    Unity node factor function.
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        Unity (1.0)
+    """
+    return 1.0
+
+
+# Schureman equations 73, 65
+def f_Mm(a):
+    """
+    Calculate Mm node factor f.
+    
+    Schureman equations 73, 65
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        Mm node factor f
+    """
+    omega = d2r * a['omega'].value
+    i = d2r * a['i'].value
+    I = d2r * a['I'].value
+    # Improve numerical stability: use np.clip
+    sin_omega_sq = np.clip(np.sin(omega) ** 2, 0.0, 1.0)
+    sin_i_sq = np.clip(np.sin(i) ** 2, 0.0, 1.0)
+    sin_I_sq = np.clip(np.sin(I) ** 2, 0.0, 1.0)
+    mean = (2 / 3.0 - sin_omega_sq) * (1 - 3 / 2.0 * sin_i_sq)
+    return (2 / 3.0 - sin_I_sq) / mean
+
+
+# Schureman equations 74, 66
+def f_Mf(a):
+    """
+    Calculate Mf node factor f.
+    
+    Schureman equations 74, 66
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        Mf node factor f
+    """
+    omega = d2r * a['omega'].value
+    i = d2r * a['i'].value
+    I = d2r * a['I'].value
+    # Improve numerical stability
+    sin_omega_sq = np.clip(np.sin(omega) ** 2, 0.0, 1.0)
+    sin_I_sq = np.clip(np.sin(I) ** 2, 0.0, 1.0)
+    mean = sin_omega_sq * np.cos(0.5 * i) ** 4
+    return sin_I_sq / mean
+
+
+# Schureman equations 75, 67
+def f_O1(a):
+    """
+    Calculate O1 node factor f.
+    
+    Schureman equations 75, 67
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        O1 node factor f
+    """
+    omega = d2r * a['omega'].value
+    i = d2r * a['i'].value
+    I = d2r * a['I'].value
+    # Improve numerical stability
+    sin_omega = np.sin(omega)
+    sin_I = np.sin(I)
+    mean = sin_omega * np.cos(0.5 * omega) ** 2 * np.cos(0.5 * i) ** 4
+    return (sin_I * np.cos(0.5 * I) ** 2) / mean
+
+
+# Schureman equations 76, 68
+def f_J1(a):
+    """
+    Calculate J1 node factor f.
+    
+    Schureman equations 76, 68
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        J1 node factor f
+    """
+    omega = d2r * a['omega'].value
+    i = d2r * a['i'].value
+    I = d2r * a['I'].value
+    # Improve numerical stability
+    sin_2omega = np.sin(2 * omega)
+    sin_2I = np.sin(2 * I)
+    sin_i_sq = np.clip(np.sin(i) ** 2, 0.0, 1.0)
+    mean = sin_2omega * (1 - 3 / 2.0 * sin_i_sq)
+    return sin_2I / mean
+
+
+# Schureman equations 77, 69
+def f_OO1(a):
+    """
+    Calculate OO1 node factor f.
+    
+    Schureman equations 77, 69
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        OO1 node factor f
+    """
+    omega = d2r * a['omega'].value
+    i = d2r * a['i'].value
+    I = d2r * a['I'].value
+    # Improve numerical stability
+    sin_omega = np.sin(omega)
+    sin_I = np.sin(I)
+    mean = sin_omega * np.sin(0.5 * omega) ** 2 * np.cos(0.5 * i) ** 4
+    return sin_I * np.sin(0.5 * I) ** 2 / mean
+
+
+# Schureman equations 78, 70
+def f_M2(a):
+    """
+    Calculate M2 node factor f.
+    
+    Schureman equations 78, 70
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        M2 node factor f
+    """
+    omega = d2r * a['omega'].value
+    i = d2r * a['i'].value
+    I = d2r * a['I'].value
+    mean = np.cos(0.5 * omega) ** 4 * np.cos(0.5 * i) ** 4
+    return np.cos(0.5 * I) ** 4 / mean
+
+
+# Schureman equations 227, 226, 68
+# Should probably eventually include the derivations of the magic numbers (0.5023 etc).
+def f_K1(a):
+    """
+    Calculate K1 node factor f.
+    
+    Schureman equations 227, 226, 68
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        K1 node factor f
+    """
+    omega = d2r * a['omega'].value
+    i = d2r * a['i'].value
+    I = d2r * a['I'].value
+    nu = d2r * a['nu'].value
+    # Improve numerical stability
+    sin_2omega = np.sin(2 * omega)
+    sin_2I = np.sin(2 * I)
+    sin_i_sq = np.clip(np.sin(i) ** 2, 0.0, 1.0)
+    sin2Icosnu_mean = sin_2omega * (1 - 3 / 2.0 * sin_i_sq)
+    mean = 0.5023 * sin2Icosnu_mean + 0.1681
+    # Improve numerical stability by using np.clip
+    result = (0.2523 * sin_2I ** 2 + 0.1689 * sin_2I * np.cos(nu) + 0.0283) ** (0.5) / mean
+    return np.clip(result, 0.0, np.inf)
+
+
+# Schureman equations 215, 213, 204
+# It can be (and has been) confirmed that the exponent for R_a reads 1/2 via Schureman Table 7
+def f_L2(a):
+    """
+    Calculate L2 node factor f.
+    
+    Schureman equations 215, 213, 204
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        L2 node factor f
+    """
+    P = d2r * a['P'].value
+    I = d2r * a['I'].value
+    # Improve numerical stability
+    tan_half_I = np.tan(0.5 * I)
+    cos_2P = np.cos(2 * P)
+    R_a_inv = (1 - 12 * tan_half_I ** 2 * cos_2P + 36 * tan_half_I ** 4) ** (0.5)
+    return f_M2(a) * R_a_inv
+
+
+# Schureman equations 235, 234, 71
+# Again, magic numbers
+def f_K2(a):
+    """
+    Calculate K2 node factor f.
+    
+    Schureman equations 235, 234, 71
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        K2 node factor f
+    """
+    omega = d2r * a['omega'].value
+    i = d2r * a['i'].value
+    I = d2r * a['I'].value
+    nu = d2r * a['nu'].value
+    # Improve numerical stability
+    sin_omega_sq = np.clip(np.sin(omega) ** 2, 0.0, 1.0)
+    sin_I_sq = np.clip(np.sin(I) ** 2, 0.0, 1.0)
+    sin_i_sq = np.clip(np.sin(i) ** 2, 0.0, 1.0)
+    sinsqIcos2nu_mean = sin_omega_sq * (1 - 3 / 2.0 * sin_i_sq)
+    mean = 0.5023 * sinsqIcos2nu_mean + 0.0365
+    # Improve numerical stability by using np.clip
+    result = (0.2533 * np.sin(I) ** 4 + 0.0367 * sin_I_sq * np.cos(2 * nu) + 0.0013) ** (0.5) / mean
+    return np.clip(result, 0.0, np.inf)
+
+
+# Schureman equations 206, 207, 195
+def f_M1(a):
+    """
+    Calculate M1 node factor f.
+    
+    Schureman equations 206, 207, 195
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        M1 node factor f
+    """
+    P = d2r * a['P'].value
+    I = d2r * a['I'].value
+    # Improve numerical stability
+    cos_I = np.cos(I)
+    cos_2P = np.cos(2 * P)
+    cos_half_I = np.cos(0.5 * I)
+    Q_a_inv = (0.25 + 1.5 * cos_I * cos_2P * cos_half_I ** (-0.5) + 2.25 * cos_I ** 2 * cos_half_I ** (-4)) ** (0.5)
+    return f_O1(a) * Q_a_inv
+
+
+# See e.g. Schureman equation 149
+def f_Modd(a, n):
+    """
+    Calculate odd M constituent node factor f.
+    
+    See e.g. Schureman equation 149
+    
+    Args:
+        a: Astronomical parameters dictionary
+        n: Order of the constituent
+        
+    Returns:
+        Odd M constituent node factor f
+    """
+    return f_M2(a) ** (n / 2.0)
+
+
+# Node factors u, see Table 2 of Schureman.
+
+def u_zero(a):
+    """
+    Zero node factor u.
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        Zero (0.0)
+    """
+    return 0.0
+
+
+def u_Mf(a):
+    """
+    Calculate Mf node factor u.
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        Mf node factor u
+    """
+    result = -2.0 * a['xi'].value
+    return np.clip(result, -180.0, 180.0)
+
+
+def u_O1(a):
+    """
+    Calculate O1 node factor u.
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        O1 node factor u
+    """
+    result = 2.0 * a['xi'].value - a['nu'].value
+    return np.clip(result, -180.0, 180.0)
+
+
+def u_J1(a):
+    """
+    Calculate J1 node factor u.
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        J1 node factor u
+    """
+    result = -a['nu'].value
+    return np.clip(result, -180.0, 180.0)
+
+
+def u_OO1(a):
+    """
+    Calculate OO1 node factor u.
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        OO1 node factor u
+    """
+    result = -2.0 * a['xi'].value - a['nu'].value
+    return np.clip(result, -180.0, 180.0)
+
+
+def u_M2(a):
+    """
+    Calculate M2 node factor u.
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        M2 node factor u
+    """
+    result = 2.0 * a['xi'].value - 2.0 * a['nu'].value
+    return np.clip(result, -180.0, 180.0)
+
+
+def u_K1(a):
+    """
+    Calculate K1 node factor u.
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        K1 node factor u
+    """
+    result = -a['nup'].value
+    return np.clip(result, -180.0, 180.0)
+
+
+# Schureman 214
+def u_L2(a):
+    """
+    Calculate L2 node factor u.
+    
+    Schureman 214
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        L2 node factor u
+    """
+    I = d2r * a['I'].value
+    P = d2r * a['P'].value
+    # Improve numerical stability
+    tan_half_I = np.tan(0.5 * I)
+    if tan_half_I == 0:
+        result = 2.0 * a['xi'].value - 2.0 * a['nu'].value
+        return np.clip(result, -180.0, 180.0)
+    R = r2d * np.arctan(np.sin(2 * P) / (1 / 6.0 * tan_half_I ** (-2) - np.cos(2 * P)))
+    result = 2.0 * a['xi'].value - 2.0 * a['nu'].value - R
+    return np.clip(result, -180.0, 180.0)
+
+
+def u_K2(a):
+    """
+    Calculate K2 node factor u.
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        K2 node factor u
+    """
+    result = -2.0 * a['nupp'].value
+    return np.clip(result, -180.0, 180.0)
+
+
+# Schureman 202
+def u_M1(a):
+    """
+    Calculate M1 node factor u.
+    
+    Schureman 202
+    
+    Args:
+        a: Astronomical parameters dictionary
+        
+    Returns:
+        M1 node factor u
+    """
+    I = d2r * a['I'].value
+    P = d2r * a['P'].value
+    # Improve numerical stability
+    cos_I = np.cos(I)
+    if cos_I == 0:
+        result = a['xi'].value - a['nu'].value
+        return np.clip(result, -180.0, 180.0)
+    Q = r2d * np.arctan((5 * cos_I - 1) / (7 * cos_I + 1) * np.tan(P))
+    result = a['xi'].value - a['nu'].value + Q
+    return np.clip(result, -180.0, 180.0)
+
+
+def u_Modd(a, n):
+    """
+    Calculate odd M constituent node factor u.
+    
+    Args:
+        a: Astronomical parameters dictionary
+        n: Order of the constituent
+        
+    Returns:
+        Odd M constituent node factor u
+    """
+    return n / 2.0 * u_M2(a)

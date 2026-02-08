@@ -1,0 +1,90 @@
+# pytides-py3 프로젝트 업데이트 계획
+
+## 목표
+
+1. 최신 Python 버전에서 사용할 수 있도록 업데이트
+2. NumPy 2.x 및 최신 SciPy 버전 지원
+3. UV 기반 패키지 빌드 및 배포
+
+## 원칙
+
+1. 타입힌팅은 Python에 표준으로 등장하기 전까지 사용하지 않음
+
+## 현재 상태
+
+- Python >= 3.11, < 3.14 지원
+- NumPy >= 2.3.1, SciPy >= 1.16.0
+- UV 기반 빌드/배포 체계 (`pyproject.toml` + setuptools)
+- 테스트 119개 통과
+
+### 현재 의존성
+
+- `numpy>=2.3.1`
+- `scipy>=1.16.0`
+
+---
+
+## ~~1단계: 의존성 업데이트~~
+
+### 1.1 NumPy 업데이트
+- [x] `numpy>=1.8` → `numpy>=2.3.1`
+- [x] `np.divide` → `/` 연산자로 변경
+- [x] NumPy 2.x API 호환성 검증 완료
+
+### 1.2 SciPy 업데이트
+- [x] `scipy>=0.11` → `scipy>=1.16.0`
+- [x] `scipy.optimize.leastsq` → `scipy.optimize.least_squares` 전환
+
+## ~~2단계: Python 호환성 개선~~
+- [x] `python_requires='>=3.11,<3.14'`
+- [x] Python 3.11, 3.12, 3.13 지원
+- [x] `collections.abc` 사용
+- [x] f-string 사용
+
+## ~~3단계: 패키지 빌드 체계 전환~~
+
+- [x] `pyproject.toml`로 모든 메타데이터 이전 (빌드 백엔드: setuptools)
+- [x] `setup.py`, `setup.cfg`, `MANIFEST.in` 삭제
+- [x] `pytidespy3/__init__.py` 생성 (`__version__`, 주요 임포트)
+- [x] `tests/__init__.py` 생성
+- [x] `uv build` → sdist + wheel 생성 확인
+- [x] `CLAUDE.md` 생성 (Claude Code 가이드)
+
+## ~~4단계: 로버스트성 개선~~
+
+- [x] `Tide.decompose()` — NaN/inf 자동 제거 (heights + 대응 시간 쌍 제거)
+- [x] `Tide.decompose()` — `weights` 파라미터 추가 (가중 최소제곱)
+- [x] `Tide.decompose()` — `loss` 파라미터 추가 (`'linear'`, `'huber'`, `'soft_l1'`, `'cauchy'`, `'arctan'`)
+- [x] `Tide.at()` — 빈 배열 입력 검증
+- [x] 로버스트성 테스트 6개 추가 (NaN, inf, 전체 NaN, weights, huber loss, 빈 배열)
+
+## ~~6단계: PyPI 배포~~
+
+---
+
+## 5단계: 학술 검증 (미착수)
+
+NOAA 실측 데이터를 활용한 정확도 검증
+
+### 5.1 다관측소 장기 검증 (TODO #1)
+- [ ] 반일주/일주/혼합 조석을 대표하는 3개 이상 관측소 데이터 수집
+- [ ] 장기(≥3개월) 시계열로 RMSE·MAE·상관·극값 오차 비교
+- [ ] 현재 San Francisco 1개소(1주일) → 확장 필요
+
+### 5.2 계절 변동 검증 (TODO #2)
+- [ ] 동일 관측소의 계절별 구간(겨울/여름) 정확도 비교
+- [ ] 5.1 데이터 확보 후 진행
+
+### 5.3 NOAA 공식 조화상수 비교 (TODO #3)
+- [ ] NOAA CO-OPS에서 관측소별 공식 amplitude/phase 수집
+- [ ] `Tide.decompose` 결과와 성분별(M2, S2, K1, O1 등) 비교 테스트 작성
+- [ ] 허용 오차 기준 설정
+
+---
+
+## 리스크
+
+1. [x] 기존 사용자 호환성 유지 (검증 완료)
+2. [x] NumPy/SciPy API 변경으로 인한 기능 손실 (검증 완료)
+3. [ ] 성능 변화 모니터링 필요
+4. [ ] 학술 검증을 위한 NOAA 데이터 확보 필요

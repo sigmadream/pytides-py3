@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=80.9.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pytides-py3"
+version = "0.8.0"
+description = "조석 분석 및 예측을 위한 Python 라이브러리 (Tidal analysis and prediction library)"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11,<3.14"
+authors = [
+    { name = "Sangkon Han", email = "sigmadream@gmail.com" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "numpy>=2.3.1",
+    "scipy>=1.16.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/sigmadream/pytides-py3"
+Repository = "https://github.com/sigmadream/pytides-py3"
+
+[tool.setuptools.packages.find]
+include = ["pytidespy3*"]
+exclude = ["tests*"]
