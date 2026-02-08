@@ -1,42 +1,74 @@
 # pytides-py3
 
-> pytides-py3는 조석 분석 및 예측을 위한 Python 라이브러리입니다. 이는 기존 pytides의 개선된 버전으로, Python 3.12.x에서 작동하도록 업데이트되었습니다.
+> Tidal analysis and prediction library for Python 3.11+.
+> An improved fork of the original [pytides](https://github.com/sam-cox/pytides), updated for NumPy 2.x and modern SciPy.
 
-## 실행
+## Installation
 
 ```bash
-pip install -e .
-python -m unittest discover -s tests
+pip install pytides-py3
 ```
 
-## 주요 특징:
+Or with UV:
 
-- 조석 분석 및 예측: 과거 조석 데이터를 기반으로 특정 위치의 조석 행동을 추정
-- 조화분조법(Harmonic Constituents) 사용: P. Schureman의 Special Publication 98에 제시된 방법론 적용
-- NOAA 조화분조 지원: NOAA에서 발표한 진폭과 위상을 직접 사용 가능
-- Scipy 최적화: leastsq 최소화 함수를 사용한 진폭과 위상 피팅
+```bash
+uv add pytides-py3
+```
 
-## 기술적 요구사항:
+## Quick Start
 
-- Python >= 3.11.x
-- NumPy >= 1.8
-- SciPy >= 0.11
+```python
+from datetime import datetime, timedelta
+from pytidespy3 import Tide, constituent
 
-## 주요 기능:
+# Build a model from known constituents
+model = Tide(
+    constituents=[constituent._M2, constituent._S2, constituent._K1],
+    amplitudes=[1.0, 0.5, 0.3],
+    phases=[0.0, 90.0, 180.0],
+)
 
-- 조석 모델링: `Tide` 클래스를 통한 조석 예측
-- 고조/저조 예측: `highs()`, `lows()` 메서드로 고조와 저조 시점 예측
-- 조석 분류: form number를 통한 조석 유형 분류 (반일주조, 혼합조, 일주조)
-- 시간대 처리: UTC datetime 형식 사용 (서머타임 조정 없음)
+# Predict tidal heights
+times = [datetime(2023, 1, 1) + timedelta(hours=i) for i in range(24)]
+heights = model.at(times)
 
-## 참고 문헌
+# Get high/low water times
+highs = list(model.highs(datetime(2023, 1, 1), datetime(2023, 1, 8)))
+lows = list(model.lows(datetime(2023, 1, 1), datetime(2023, 1, 8)))
 
----
+# Decompose observed data into harmonic constituents
+fitted = Tide.decompose(heights=observed_heights, t=observed_times)
+```
 
-## Original README
+## Main Features
 
-Pytides is small Python package for the analysis and prediction of tides. Pytides can be used to extrapolate the tidal behaviour at a given location from its previous behaviour. The method used is that of harmonic constituents, in particular as presented by P. Schureman in Special Publication 98. The fitting of amplitudes and phases is handled by Scipy's leastsq minimisation function. Pytides currently supports the constituents used by NOAA, with plans to add more constituent sets. It is therefore possible to use the amplitudes and phases published by NOAA directly, without the need to perform the analysis again (although there may be slight discrepancies for some constituents). 
+- Tidal analysis and prediction via Schureman's harmonic constituent method
+- 37 NOAA harmonic constituents (M2, S2, K1, O1, N2, etc.)
+- Robust fitting: NaN/inf auto-removal, weighted least squares, robust loss functions (`huber`, `soft_l1`, `cauchy`, `arctan`)
+- High/low water prediction with `highs()`, `lows()`, `extrema()`
+- Tide classification: form number-based (semidiurnal, mixed, diurnal)
 
-It is recommended that all interactions with pytides which require times to be specified are in the format of naive UTC datetime instances. In particular, note that pytides makes no adjustment for summertime or any other civil variations within timezones. 
+## Requirements
 
-For more information, please see http://github.com/sam-cox/pytides and https://github.com/sigmadream/pytides
+- Python >= 3.11, < 3.14
+- NumPy >= 2.3.1
+- SciPy >= 1.16.0
+
+## Development
+
+```bash
+uv sync
+uv run python -m unittest discover -s tests -v
+uv build
+```
+
+## References
+
+- Original pytides: https://github.com/sam-cox/pytides
+- Schureman, P. (1958). __Manual of Harmonic Analysis and Prediction of Tides__. U.S. Coast and Geodetic Survey, Special Publication No. 98.
+    - [Link1](https://tidesandcurrents.noaa.gov/publications/SpecialPubNo98.pdf)
+- Meeus, J. (1991). __Astronomical Algorithms__. Willmann-Bell.
+
+## License
+
+MIT

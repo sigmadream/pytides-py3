@@ -307,6 +307,22 @@ class TestConstituentDefinitions(unittest.TestCase):
             f = const.f(self.astro_data)
             self.assertGreater(f, 0)
 
+    def test_major_constituent_speeds(self):
+        """Test speeds of major constituents against Schureman reference values."""
+        expected_speeds = {
+            _M2: 28.984,
+            _S2: 30.000,
+            _K1: 15.041,
+            _O1: 13.943,
+            _N2: 28.440,
+        }
+
+        for const, expected in expected_speeds.items():
+            with self.subTest(constituent=const.name):
+                speed = const.speed(self.astro_data)
+                self.assertAlmostEqual(speed, expected, places=2,
+                    msg=f"{const.name} speed {speed:.3f} != expected {expected:.3f}")
+
     def test_compound_constituent_calculations(self):
         """Test calculations of compound harmonic constituents."""
         MS4 = _MS4

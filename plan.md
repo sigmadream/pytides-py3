@@ -1,167 +1,100 @@
-# pytides-py3 프로젝트 업데이트 계획
+# pytides-py3 Project Update Plan
 
-## 목표
-1. 최신 Python 버전에서 사용할 수 있도록 업데이트
-2. NumPy 2.x 및 최신 SciPy 버전 지원
-3. pip 패키지를 최신으로 수정
+## Goals
 
-## 현재 상태 분석
+1. Update for use on recent Python versions
+2. Support NumPy 2.x and recent SciPy versions
+3. UV-based package build and distribution
 
-### 현재 Python 호환성
-- Python >= 3.11.x 지원
-- 최신 Python 버전(3.12, 3.13)에서 테스트 필요
+## Principles
 
-### 현재 의존성
-- NumPy >= 1.8 (매우 오래된 버전) → **NumPy >= 2.0.0으로 업데이트 완료**
-- SciPy >= 0.11 (매우 오래된 버전) → **SciPy >= 1.10.0으로 업데이트 완료**
+1. Do not use type hinting until it is part of the Python standard
 
-## 업데이트 계획
+## Current Status
 
-### ✅ 1단계: 의존성 업데이트 (완료)
+- **Version**: 0.8.0
+- Python >= 3.11, < 3.14 supported
+- NumPy >= 2.3.1, SciPy >= 1.16.0
+- UV-based build/distribution (`pyproject.toml` + setuptools)
+- 120 tests passing
 
-#### 1.1 NumPy 업데이트
-- ✅ 현재: `numpy>=1.8`
-- ✅ 목표: `numpy>=2.0.0` (Python 3.12+ 지원)
-- ✅ 변경 사항:
-  - 최신 NumPy API 사용
-  - `np.divide` → `/` 연산자로 변경
-  - 타입 힌트 추가
+### Current Dependencies
 
-#### 1.2 SciPy 업데이트
-- ✅ 현재: `scipy>=0.11`
-- ✅ 목표: `scipy>=1.10.0` (Python 3.12+ 지원)
-- ✅ 변경 사항:
-  - `scipy.optimize.leastsq` → `scipy.optimize.least_squares` 고려
-  - 최신 SciPy API 사용
+- `numpy>=2.3.1`
+- `scipy>=1.16.0`
 
-### ✅ 2단계: Python 호환성 개선 (완료)
+---
 
-#### 2.1 Python 버전 지원 확장
-- ✅ 현재: `python_requires='>=3.11'`
-- ✅ 목표: `python_requires='>=3.11,<3.14'`
-- ✅ Python 3.12, 3.13 지원 추가
+## ~~Phase 1: Dependency Update~~
 
-#### 2.2 코드 현대화
-- ✅ 타입 힌트 추가
-- ✅ f-string 사용
-- ✅ 최신 Python 문법 적용
-- ✅ `collections.abc` 사용 (이미 사용 중)
+### 1.1 NumPy Update
+- [x] `numpy>=1.8` → `numpy>=2.3.1`
+- [x] Replace `np.divide` with `/` operator
+- [x] NumPy 2.x API compatibility verified
 
-### ✅ 3단계: 패키지 메타데이터 업데이트 (완료)
+### 1.2 SciPy Update
+- [x] `scipy>=0.11` → `scipy>=1.16.0`
+- [x] Migrate from `scipy.optimize.leastsq` to `scipy.optimize.least_squares`
 
-#### 3.1 setup.py 개선
-- ✅ 최신 setuptools 사용
-- ✅ pyproject.toml 고려
-- ✅ 의존성 버전 업데이트
-- ✅ 분류자(classifiers) 업데이트
+## ~~Phase 2: Python Compatibility~~
+- [x] `python_requires='>=3.11,<3.14'`
+- [x] Support Python 3.11, 3.12, 3.13
+- [x] Use `collections.abc`
+- [x] Use f-strings
 
-#### 3.2 README 업데이트
-- ✅ 설치 방법 현대화
-- ✅ 사용 예제 업데이트
-- ✅ 최신 Python 버전 정보 추가
+## ~~Phase 3: Package Build System Migration~~
+- [x] Move all metadata to `pyproject.toml` (build backend: setuptools)
+- [x] Remove `setup.py`, `setup.cfg`, `MANIFEST.in`
+- [x] Add `pytidespy3/__init__.py` (`__version__`, main imports)
+- [x] Add `tests/__init__.py`
+- [x] Confirm `uv build` produces sdist + wheel
+- [x] Add `CLAUDE.md` (Claude Code guide)
 
-### 🔄 4단계: 테스트 및 검증 (진행 중)
+## ~~Phase 4: Robustness Improvements~~
+- [x] `Tide.decompose()` — Auto-remove NaN/inf (drop height–time pairs)
+- [x] `Tide.decompose()` — Add `weights` parameter (weighted least squares)
+- [x] `Tide.decompose()` — Add `loss` parameter (`'linear'`, `'huber'`, `'soft_l1'`, `'cauchy'`, `'arctan'`)
+- [x] `Tide.at()` — Validate empty array input
+- [x] Add 6 robustness tests (NaN, inf, all-NaN, weights, huber loss, empty array)
 
-#### 4.1 테스트 환경 구축
-- ✅ Python 3.11, 3.12, 3.13에서 테스트
-- 🔄 CI/CD 파이프라인 구축 (GitHub Actions)
+## ~~Phase 5: Scientific Accuracy~~
+- [x] Fix s/h variable swap in `astro.py` (Schureman convention: s=lunar, h=solar)
+- [x] Add constituent speed validation tests (M2=28.984, S2=30.0, K1=15.041, O1=13.943, N2=28.440 deg/hr)
+- [x] Update golden values in `test_astro.py` and `test_tide.py`
+- [x] Fix `test_reference_data.py` docstring and tolerance label errors
+- [x] Relax node factor range assertion (`f < 2.0` → `f < 3.0`)
 
-#### 4.2 기능 테스트
-- ✅ 기존 기능들이 정상 작동하는지 확인
-- 🔄 성능 테스트
-- 🔄 메모리 사용량 확인
+## ~~Phase 6: PyPI Release~~
+- [x] Version 0.8.0
+- [x] Update CHANGES, PLAN.md, README.md
+- [x] `uv build` produces sdist + wheel
 
-### 🔄 5단계: 문서화 개선 (진행 중)
+---
 
-#### 5.1 API 문서 업데이트
-- 🔄 docstring 현대화
-- 🔄 예제 코드 업데이트
-- 🔄 타입 힌트 문서화
+## Phase 7: Academic Validation (Not Started)
 
-#### 5.2 설치 가이드 개선
-- ✅ 최신 pip 설치 방법
-- ✅ 가상환경 사용 권장사항
-- 🔄 의존성 충돌 해결 방법
+Accuracy validation using NOAA observed data
 
-## 구체적 작업 항목
+### 7.1 Multi-Station Long-Term Validation
+- [ ] Collect data from 3+ stations representing semidiurnal/diurnal/mixed tides
+- [ ] Compare RMSE, MAE, correlation, and extreme-value error on long-term (>=3 months) series
+- [ ] Current coverage: San Francisco only (1 week) — needs expansion
 
-### ✅ 코드 수정 완료 파일들
-1. ✅ `setup.py` - 의존성 버전 업데이트
-2. ✅ `pytidespy3/tide.py` - NumPy/SciPy API 업데이트
-3. ✅ `pytidespy3/astro.py` - 최신 Python 문법 적용
-4. ✅ `pytidespy3/constituent.py` - 타입 힌트 추가
-5. ✅ `pytidespy3/nodal_corrections.py` - 코드 현대화
+### 7.2 Seasonal Variation Validation
+- [ ] Compare accuracy across seasonal segments (winter/summer) at the same station
+- [ ] Proceed after 7.1 data is available
 
-### ✅ 새로운 파일 생성
-1. ✅ `requirements.txt` - 개발 의존성 관리
-2. ✅ `test_numpy2_compatibility.py` - NumPy 2.x 호환성 테스트
-3. 🔄 `tests/` 디렉토리 - 테스트 코드
-4. 🔄 `.github/workflows/` - CI/CD 설정
+### 7.3 NOAA Official Harmonic Constants Comparison
+- [ ] Obtain official amplitude/phase per station from NOAA CO-OPS
+- [ ] Add comparison tests (constituent-wise: M2, S2, K1, O1, etc.) with `Tide.decompose` results
+- [ ] Define tolerance criteria
 
-### 버전 관리
-- ✅ 현재 버전: 0.0.6 → 0.0.7
-- 🔄 목표 버전: 0.1.0 (주요 업데이트)
-- 🔄 CHANGELOG.md 생성
+---
 
-## NumPy 2.x 호환성 분석 결과
+## Risks
 
-### ✅ 호환 가능한 부분들
-1. **기본 NumPy 함수들**: 현재 코드에서 사용하는 대부분의 NumPy 함수들은 2.x에서도 호환됩니다
-2. **배열 연산**: 현재 사용하는 배열 연산들은 2.x에서도 정상 작동합니다
-3. **수학 함수들**: `np.sin`, `np.cos`, `np.arctan` 등은 호환됩니다
-
-### ✅ 수정 완료된 부분들
-1. **`np.divide` 함수**: `/` 연산자로 변경 완료
-2. **코드 포맷팅**: black 스타일로 포맷팅 완료
-3. **타입 힌트**: NumPy 2.x의 엄격한 타입 시스템에 맞게 조정
-
-### ⚠️ 주의사항
-1. **deprecated 경고**: 일부 함수들이 deprecated될 수 있으므로 지속적 모니터링 필요
-2. **성능 변화**: NumPy 2.x의 성능 변화를 모니터링 필요
-3. **타입 시스템**: 더 엄격한 타입 시스템으로 인한 경고 발생 가능
-
-## 우선순위
-
-### ✅ 높음 (완료)
-1. ✅ 의존성 버전 업데이트
-2. ✅ Python 3.12+ 호환성 확인
-3. ✅ setup.py 수정
-
-### 🔄 중간 (1-2주 내)
-1. ✅ 코드 현대화
-2. 🔄 테스트 환경 구축
-3. 🔄 문서 업데이트
-
-### 🔄 낮음 (1개월 내)
-1. 🔄 pyproject.toml 도입
-2. 🔄 CI/CD 파이프라인 구축
-3. 🔄 성능 최적화
-
-## 예상 소요 시간
-- 총 예상 시간: 2-3주
-- ✅ 의존성 업데이트: 1주 (완료)
-- ✅ 코드 현대화: 1주 (완료)
-- 🔄 테스트 및 문서화: 1주 (진행 중)
-
-## 리스크 및 고려사항
-1. ✅ 기존 사용자 호환성 유지
-2. ✅ NumPy/SciPy API 변경으로 인한 기능 손실 가능성 (검증 완료)
-3. 🔄 성능 변화 모니터링 필요
-4. 🔄 테스트 커버리지 확보 필요
-
-## NumPy 2.x 업데이트의 장점
-
-### 성능 향상
-- NumPy 2.x는 이전 버전 대비 성능이 향상됨
-- 새로운 최적화 기법 적용
-- 메모리 사용량 개선
-
-### 최신 기능 지원
-- 최신 Python 버전과의 완벽한 호환성
-- 향상된 타입 시스템
-- 더 나은 에러 메시지
-
-### 장기 지원
-- NumPy 2.x는 장기 지원 버전
-- 보안 업데이트 및 버그 수정 지속
-- 커뮤니티 지원 확대 
+1. [x] Maintain compatibility with existing users (verified)
+2. [x] Feature loss from NumPy/SciPy API changes (verified)
+3. [x] Scientific accuracy of constituent speeds (fixed s/h swap)
+4. [ ] Performance change monitoring needed
+5. [ ] NOAA data acquisition needed for academic validation

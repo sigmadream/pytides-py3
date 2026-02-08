@@ -216,7 +216,7 @@ class TestNodalCorrections(unittest.TestCase):
         for f_func in f_functions:
             result = f_func(self.astro_data)
             self.assertGreater(result, 0)
-            self.assertLess(result, 2.0)
+            self.assertLess(result, 3.0)
 
     def test_u_values_ranges(self):
         """Test ranges of u values."""

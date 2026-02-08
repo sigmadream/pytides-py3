@@ -442,8 +442,10 @@ def astro(t):
     jd_array = np.asarray([JD(t_i) for t_i in times], dtype=np.float64)
     
     # Vectorized calculations
-    s = polynomial(solar_longitude_coefficients, t_array)
-    h = polynomial(lunar_longitude_coefficients, t_array)
+    # s = mean longitude of Moon (Schureman convention)
+    # h = mean longitude of Sun (Schureman convention)
+    s = polynomial(lunar_longitude_coefficients, t_array)
+    h = polynomial(solar_longitude_coefficients, t_array)
     p = polynomial(lunar_perigee_coefficients, t_array)
     N = polynomial(lunar_node_coefficients, t_array)
     pp = polynomial(solar_perigee_coefficients, t_array)
@@ -471,8 +473,8 @@ def astro(t):
     nupp = _nupp(N, i, omega)
     
     # Calculate speeds (vectorized) - convert Julian Century angles to hourly angles
-    s_speed = d_polynomial(solar_longitude_coefficients, t_array) / (JULIAN_CENTURY * 24.0)
-    h_speed = d_polynomial(lunar_longitude_coefficients, t_array) / (JULIAN_CENTURY * 24.0)
+    s_speed = d_polynomial(lunar_longitude_coefficients, t_array) / (JULIAN_CENTURY * 24.0)
+    h_speed = d_polynomial(solar_longitude_coefficients, t_array) / (JULIAN_CENTURY * 24.0)
     p_speed = d_polynomial(lunar_perigee_coefficients, t_array) / (JULIAN_CENTURY * 24.0)
     N_speed = d_polynomial(lunar_node_coefficients, t_array) / (JULIAN_CENTURY * 24.0)
     pp_speed = d_polynomial(solar_perigee_coefficients, t_array) / (JULIAN_CENTURY * 24.0)
@@ -540,37 +542,39 @@ def vectorized_astro(times):
     T_array = np.asarray([T(t) for t in times], dtype=np.float64)
     
     # Vectorized calculations
-    s = polynomial(solar_longitude_coefficients, T_array)
-    h = polynomial(lunar_longitude_coefficients, T_array)
+    # s = mean longitude of Moon (Schureman convention)
+    # h = mean longitude of Sun (Schureman convention)
+    s = polynomial(lunar_longitude_coefficients, T_array)
+    h = polynomial(solar_longitude_coefficients, T_array)
     p = polynomial(lunar_perigee_coefficients, T_array)
     N = polynomial(lunar_node_coefficients, T_array)
     pp = polynomial(solar_perigee_coefficients, T_array)
-    
+
     # Improve numerical stability
     s = np.mod(s, 360.0)
     h = np.mod(h, 360.0)
     p = np.mod(p, 360.0)
     N = np.mod(N, 360.0)
     pp = np.mod(pp, 360.0)
-    
+
     # Calculate astronomical parameters
     omega = polynomial(terrestrial_obliquity_coefficients_adjusted, T_array)
     i = polynomial(lunar_inclination_coefficients, T_array)
-    
+
     # Improve numerical stability
     omega = np.clip(omega, 0.0, 360.0)
     i = np.clip(i, 0.0, 360.0)
-    
+
     # Calculate auxiliary parameters (vectorized)
     I = _I(N, i, omega)
     xi = _xi(N, i, omega)
     nu = _nu(N, i, omega)
     nup = _nup(N, i, omega)
     nupp = _nupp(N, i, omega)
-    
+
     # Calculate speeds (vectorized) - convert Julian Century angles to hourly angles
-    s_speed = d_polynomial(solar_longitude_coefficients, T_array) / (JULIAN_CENTURY * 24.0)
-    h_speed = d_polynomial(lunar_longitude_coefficients, T_array) / (JULIAN_CENTURY * 24.0)
+    s_speed = d_polynomial(lunar_longitude_coefficients, T_array) / (JULIAN_CENTURY * 24.0)
+    h_speed = d_polynomial(solar_longitude_coefficients, T_array) / (JULIAN_CENTURY * 24.0)
     p_speed = d_polynomial(lunar_perigee_coefficients, T_array) / (JULIAN_CENTURY * 24.0)
     N_speed = d_polynomial(lunar_node_coefficients, T_array) / (JULIAN_CENTURY * 24.0)
     pp_speed = d_polynomial(solar_perigee_coefficients, T_array) / (JULIAN_CENTURY * 24.0)

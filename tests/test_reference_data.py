@@ -87,7 +87,7 @@ class TestNoaaCrossCheck(unittest.TestCase):
         self.assertGreater(corr, 0.96, "Correlation with NOAA observations below 0.96")
 
     def test_holdout_forecast_accuracy(self):
-        """Model trained on first 48 hours should forecast next 24 hours within tolerance."""
+        """Model trained on first ~6 days should forecast last 48 hours within tolerance."""
         split_index = len(self.times) - 48
         train_times = self.times[:split_index]
         train_heights = self.heights[:split_index]
@@ -130,7 +130,7 @@ class TestNoaaCrossCheck(unittest.TestCase):
                 self.assertLessEqual(
                     abs((closest_time - obs_time).total_seconds()),
                     3900,
-                    f"{kind} tide prediction differs by more than 1 hour",
+                    f"{kind} tide prediction differs by more than 65 minutes",
                 )
                 observed_at_predicted = _interpolate_height(self.times, self.heights, closest_time)
                 self.assertLess(

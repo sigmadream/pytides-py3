@@ -120,13 +120,18 @@ class Tide(object):
     def at(self, t):
         """
         Return the modelled tidal height at given times.
-        
+
         Args:
             t: Array of times at which to evaluate the tidal height
-            
+
         Returns:
             Array of tidal heights at the specified times
+
+        Raises:
+            ValueError: 빈 배열이 입력된 경우
         """
+        if not isinstance(t, Iterable) or len(t) == 0:
+            raise ValueError("t는 비어있지 않은 시간 배열이어야 합니다.")
         t0 = t[0]
         hours = self._hours(t0, t)
         # Prepare using t0 as reference
@@ -436,12 +441,14 @@ class Tide(object):
         n_period=2,
         callback=None,
         full_output=False,
+        weights=None,
+        loss='linear',
     ):
         """
         Return an instance of Tide which has been fitted to a series of tidal observations.
-        
+
         Args:
-            heights: Numpy array of tidal observation heights
+            heights: Numpy array of tidal observation heights (NaN/inf는 자동 제거)
             t: Numpy array of tidal observation times
             t0: Datetime representing the time at which heights[0] was recorded
             interval: Hourly interval between readings
@@ -450,9 +457,14 @@ class Tide(object):
             n_period: Only include constituents which complete at least this many periods (default: 2)
             callback: Optional function to be called at each iteration of the solver
             full_output: Whether to return the output of scipy's leastsq solver (default: False)
-            
+            weights: 각 관측값의 가중치 배열 (높을수록 중요, default: None — 균등 가중치)
+            loss: scipy least_squares 손실함수 ('linear', 'huber', 'soft_l1', 'cauchy', 'arctan')
+
         Returns:
             Fitted Tide instance
+
+        Raises:
+            ValueError: 유효한 관측값이 없는 경우
         """
         if t is not None:
             if isinstance(t[0], datetime):
@@ -475,6 +487,29 @@ class Tide(object):
                 "so that each height can be identified with an "
                 "instant in time."
             )
+
+        # NaN/inf 제거: heights에서 유효하지 않은 값과 대응하는 시간을 함께 제거
+        heights = np.asarray(heights, dtype=np.float64)
+        hours = np.asarray(hours, dtype=np.float64)
+        valid = np.isfinite(heights)
+        if not np.all(valid):
+            heights = heights[valid]
+            hours = hours[valid]
+            if weights is not None:
+                weights = np.asarray(weights, dtype=np.float64)[valid]
+        if len(heights) == 0:
+            raise ValueError("유효한 관측값이 없습니다 (모든 값이 NaN 또는 inf).")
+
+        # 가중치 전처리: sqrt(정규화된 weights)로 변환
+        if weights is not None:
+            weights = np.asarray(weights, dtype=np.float64)
+            if len(weights) != len(heights):
+                raise ValueError(
+                    f"weights 길이({len(weights)})가 유효한 heights 길이({len(heights)})와 일치하지 않습니다."
+                )
+            w = np.sqrt(weights / np.mean(weights))
+        else:
+            w = None
 
         # Remove duplicate constituents (those which travel at exactly the same
         # speed, irrespective of phase)
@@ -535,6 +570,8 @@ class Tide(object):
                 ]
             )
             res = heights - s
+            if w is not None:
+                res = res * w
             if callback:
                 callback(res)
             return res
@@ -590,7 +627,7 @@ class Tide(object):
             # Default values
             initial = np.concatenate([amplitudes, phases])
 
-        lsq = least_squares(residual, initial, jac='2-point', ftol=1e-7)
+        lsq = least_squares(residual, initial, jac='2-point', ftol=1e-7, loss=loss)
 
         model = np.zeros(1 + n, dtype=cls.dtype)
         model[0] = (constituent._Z0, z0, 0)

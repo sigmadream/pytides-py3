@@ -373,7 +373,7 @@ class TestTide(unittest.TestCase):
         times = [self.test_time + timedelta(hours=i) for i in range(24)]
         predicted_heights = simple_model.at(times)
 
-        self.assertAlmostEqual(predicted_heights[0], predicted_heights[-1], delta=1.0)
+        self.assertAlmostEqual(predicted_heights[0], predicted_heights[-1], delta=0.65)
 
     def test_tide_classification_consistency(self):
         """Test tide classification consistency."""
@@ -388,27 +388,27 @@ class TestTide(unittest.TestCase):
         sample_hours = list(range(0, 49, 6))
         sample_times = [base_time + timedelta(hours=h) for h in sample_hours]
         expected_heights = np.array([
-            -0.454621527604,
-            0.730974869360,
-            -0.396309113917,
-            -0.098231337180,
-            0.006765310351,
-            0.307388491194,
-            -0.058753908925,
-            -0.477433853629,
-            0.481880495855,
+            -1.291415354521,
+            0.905184475026,
+            -0.598441116644,
+            0.928739761142,
+            -1.164352409967,
+            0.742267114021,
+            -0.390429940804,
+            0.679387268523,
+            -0.887571564512,
         ])
 
         heights = self.tide_model.at(sample_times)
         np.testing.assert_allclose(heights, expected_heights, atol=1e-9)
 
         expected_extrema = [
-            (datetime(2023, 1, 1, 3, 44, 1, 302107), 1.731447087847, "H"),
-            (datetime(2023, 1, 1, 9, 43, 14, 339142), -1.320245792967, "L"),
-            (datetime(2023, 1, 1, 15, 18, 5, 761490), 1.159819029553, "H"),
-            (datetime(2023, 1, 1, 21, 3, 14, 812091), -1.598488864063, "L"),
-            (datetime(2023, 1, 2, 3, 10, 54, 840221), 1.778754513583, "H"),
-            (datetime(2023, 1, 2, 9, 11, 25, 125081), -1.369550218609, "L"),
+            (datetime(2023, 1, 1, 5, 45, 34, 574371), 0.915911024146, "H"),
+            (datetime(2023, 1, 1, 11, 31, 16, 666570), -0.630804865364, "L"),
+            (datetime(2023, 1, 1, 17, 25, 24, 332669), 0.973372473364, "H"),
+            (datetime(2023, 1, 2, 0, 2, 4, 540310), -1.163829876367, "L"),
+            (datetime(2023, 1, 2, 6, 39, 47, 732694), 0.775521231255, "H"),
+            (datetime(2023, 1, 2, 12, 28, 10, 483534), -0.400454250753, "L"),
         ]
 
         extrema = list(self.tide_model.extrema(base_time, base_time + timedelta(days=2)))
@@ -450,6 +450,139 @@ class TestTide(unittest.TestCase):
         t1_long = self.test_time + timedelta(days=30)
         extrema_long = list(self.tide_model.extrema(t0, t1_long))
         self.assertGreater(len(extrema_long), 0)
+
+
+class TestTideRobustness(unittest.TestCase):
+    """결측/불규칙 간격/이상치 로버스트성 테스트."""
+
+    def setUp(self):
+        """합성 조석 데이터 생성 (M2 분조, 168시간)."""
+        self.t0 = datetime(2023, 1, 1, 0, 0, 0)
+        self.n_hours = 168
+        self.times = [self.t0 + timedelta(hours=i) for i in range(self.n_hours)]
+        self.source_model = tide.Tide(
+            constituents=[constituent._M2, constituent._S2],
+            amplitudes=[1.0, 0.5],
+            phases=[0.0, 45.0],
+        )
+        self.clean_heights = self.source_model.at(self.times)
+
+    def test_decompose_with_nan_heights(self):
+        """heights에 NaN이 포함되어도 정상 분석되는지 확인."""
+        heights = self.clean_heights.copy()
+        # 10% 비율로 NaN 삽입
+        rng = np.random.default_rng(42)
+        nan_indices = rng.choice(len(heights), size=len(heights) // 10, replace=False)
+        heights[nan_indices] = np.nan
+
+        result = tide.Tide.decompose(
+            heights=heights,
+            t=self.times,
+            constituents=[constituent._M2, constituent._S2],
+            n_period=0,
+        )
+        self.assertIsInstance(result, tide.Tide)
+        # NaN이 제거된 후에도 분석 결과가 유효해야 함
+        predicted = result.at(self.times)
+        self.assertTrue(np.all(np.isfinite(predicted)))
+
+    def test_decompose_with_inf_heights(self):
+        """heights에 inf가 포함되어도 정상 분석되는지 확인."""
+        heights = self.clean_heights.copy()
+        heights[5] = np.inf
+        heights[10] = -np.inf
+
+        result = tide.Tide.decompose(
+            heights=heights,
+            t=self.times,
+            constituents=[constituent._M2, constituent._S2],
+            n_period=0,
+        )
+        self.assertIsInstance(result, tide.Tide)
+        predicted = result.at(self.times)
+        self.assertTrue(np.all(np.isfinite(predicted)))
+
+    def test_decompose_all_nan_raises(self):
+        """모든 값이 NaN이면 ValueError가 발생해야 함."""
+        heights = np.full(self.n_hours, np.nan)
+
+        with self.assertRaises(ValueError):
+            tide.Tide.decompose(
+                heights=heights,
+                t=self.times,
+                constituents=[constituent._M2],
+                n_period=0,
+            )
+
+    def test_decompose_with_weights(self):
+        """weights 파라미터가 피팅 결과에 영향을 미치는지 확인."""
+        heights = self.clean_heights.copy()
+        # 이상치 삽입
+        heights[50] += 5.0
+        heights[100] += 5.0
+
+        # 균등 가중치 (이상치 영향 큼)
+        result_uniform = tide.Tide.decompose(
+            heights=heights,
+            t=self.times,
+            constituents=[constituent._M2, constituent._S2],
+            n_period=0,
+        )
+
+        # 이상치에 낮은 가중치 적용
+        weights = np.ones(self.n_hours)
+        weights[50] = 0.01
+        weights[100] = 0.01
+
+        result_weighted = tide.Tide.decompose(
+            heights=heights,
+            t=self.times,
+            constituents=[constituent._M2, constituent._S2],
+            n_period=0,
+            weights=weights,
+        )
+
+        # 가중치를 적용한 결과가 원본에 더 가까워야 함
+        pred_uniform = result_uniform.at(self.times)
+        pred_weighted = result_weighted.at(self.times)
+        rmse_uniform = np.sqrt(np.mean((self.clean_heights - pred_uniform) ** 2))
+        rmse_weighted = np.sqrt(np.mean((self.clean_heights - pred_weighted) ** 2))
+        self.assertLess(rmse_weighted, rmse_uniform)
+
+    def test_decompose_with_robust_loss(self):
+        """loss='huber' 사용 시 이상치에 강건한지 확인."""
+        heights = self.clean_heights.copy()
+        # 큰 이상치 삽입
+        heights[30] += 10.0
+        heights[80] += 10.0
+        heights[130] -= 10.0
+
+        result_linear = tide.Tide.decompose(
+            heights=heights,
+            t=self.times,
+            constituents=[constituent._M2, constituent._S2],
+            n_period=0,
+            loss='linear',
+        )
+
+        result_huber = tide.Tide.decompose(
+            heights=heights,
+            t=self.times,
+            constituents=[constituent._M2, constituent._S2],
+            n_period=0,
+            loss='huber',
+        )
+
+        pred_linear = result_linear.at(self.times)
+        pred_huber = result_huber.at(self.times)
+        rmse_linear = np.sqrt(np.mean((self.clean_heights - pred_linear) ** 2))
+        rmse_huber = np.sqrt(np.mean((self.clean_heights - pred_huber) ** 2))
+        self.assertLess(rmse_huber, rmse_linear)
+
+    def test_at_empty_array_raises(self):
+        """빈 배열 입력 시 ValueError가 발생해야 함."""
+        with self.assertRaises(ValueError):
+            self.source_model.at([])
 
 
 if __name__ == "__main__":
