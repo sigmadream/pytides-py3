@@ -23,7 +23,7 @@ uv add pytides-py3
 
 ## 기술적 요구사항
 
-- Python >= 3.10, < 3.14
+- Python >= 3.10, < 3.15
 - NumPy >= 2.2.6
 - SciPy >= 1.15.3
 
@@ -61,6 +61,36 @@ bash scripts/test-python-matrix.sh
 bash scripts/test-python-matrix.sh --supported-only
 bash scripts/test-python-matrix.sh --experimental-only
 ```
+
+체크인된 NOAA 스냅샷으로 benchmark harness를 실행하려면 다음 명령을 사용합니다.
+
+```bash
+uv run python scripts/run_noaa_benchmark.py --output-dir ./benchmark_artifacts
+```
+
+극값(extrema) 비교를 더 촘촘하게 보고 싶다면 `6-minute` 프로필을 사용할 수 있습니다.
+
+```bash
+uv run python scripts/run_noaa_benchmark.py --dataset 6-minute --output-dir ./benchmark_artifacts_6min
+```
+
+시간 해상도별 차이를 한 번에 보는 비교 리포트도 생성할 수 있습니다.
+
+```bash
+uv run python scripts/compare_benchmark_artifacts.py
+```
+
+선택 의존성인 `UTide` 비교를 켜려면 다음 명령을 먼저 실행합니다.
+
+```bash
+uv sync --extra benchmark
+```
+
+현재 체크인된 benchmark 결과 해석은 다음과 같습니다.
+
+- `hourly`와 `6-minute` 모두 평균 RMSE 기준으로는 `pytides-py3`와 `UTide`가 사실상 동률입니다.
+- `6-minute` 프로필은 평균 RMSE를 거의 바꾸지 않으면서 평균 `p95 extrema timing error`를 약 `67분`에서 약 `39분` 수준으로 낮춥니다.
+- 생성된 비교 리포트는 `benchmark_artifacts/benchmark-resolution-comparison.md`에 저장됩니다.
 
 ---
 

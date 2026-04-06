@@ -8,6 +8,11 @@ import numpy as np
 
 import pytidespy3.constituent as constituent
 import pytidespy3.tide as tide
+from tests.benchmark_support import (
+    collect_extrema_alignment_errors,
+    interpolate_height,
+    load_noaa_snapshot,
+)
 
 
 DATA_PATH = Path(__file__).parent / "data" / "noaa_9414290_hourly_height_20230101_20230108.json"
@@ -22,14 +27,8 @@ NOAA_MAJOR_CONSTITUENTS = [
 
 
 def _load_noaa_dataset():
-    with DATA_PATH.open("r", encoding="utf-8") as handle:
-        payload = json.load(handle)
-    times = [
-        datetime.strptime(entry["t"], "%Y-%m-%d %H:%M")
-        for entry in payload["data"]
-    ]
-    heights = np.asarray([float(entry["v"]) for entry in payload["data"]], dtype=np.float64)
-    return times, heights
+    snapshot = load_noaa_snapshot(DATA_PATH)
+    return snapshot.times, snapshot.heights
 
 
 def _extract_extrema(times, heights):
@@ -44,23 +43,7 @@ def _extract_extrema(times, heights):
 
 def _interpolate_height(times, heights, target_time):
     """Linear interpolation helper for irregular evaluations."""
-    if target_time <= times[0]:
-        return heights[0]
-    if target_time >= times[-1]:
-        return heights[-1]
-    # Binary search for neighbouring timestamps
-    left, right = 0, len(times) - 1
-    while right - left > 1:
-        mid = (left + right) // 2
-        if times[mid] <= target_time:
-            left = mid
-        else:
-            right = mid
-    span = (times[right] - times[left]).total_seconds()
-    if span == 0:
-        return heights[left]
-    ratio = (target_time - times[left]).total_seconds() / span
-    return heights[left] + ratio * (heights[right] - heights[left])
+    return interpolate_height(times, heights, target_time)
 
 
 class TestNoaaCrossCheck(unittest.TestCase):
@@ -118,34 +101,25 @@ class TestNoaaCrossCheck(unittest.TestCase):
         )
         maxima, minima = _extract_extrema(self.times, self.heights)
         predicted_extrema = list(model.extrema(self.times[0], self.times[-1]))
-        predicted_maxima = [ext for ext in predicted_extrema if ext[2] == "H"]
-        predicted_minima = [ext for ext in predicted_extrema if ext[2] == "L"]
+        errors = collect_extrema_alignment_errors(self.times, self.heights, predicted_extrema)
 
-        def assert_alignment(observed_extrema, predicted_extrema, kind):
-            for obs_time, obs_height in observed_extrema:
-                closest_time, closest_height, _ = min(
-                    predicted_extrema,
-                    key=lambda triple: abs((triple[0] - obs_time).total_seconds()),
-                )
+        for kind in ("H", "L"):
+            for item in errors[kind]:
                 self.assertLessEqual(
-                    abs((closest_time - obs_time).total_seconds()),
+                    item["time_error_seconds"],
                     3900,
                     f"{kind} tide prediction differs by more than 65 minutes",
                 )
-                observed_at_predicted = _interpolate_height(self.times, self.heights, closest_time)
                 self.assertLess(
-                    abs(closest_height - observed_at_predicted),
+                    item["predicted_height_error"],
                     0.32,
                     f"{kind} tide height differs by more than 32 cm at predicted time",
                 )
                 self.assertLess(
-                    abs(observed_at_predicted - obs_height),
+                    item["observed_height_error"],
                     0.15,
                     f"{kind} observe/extrema mismatch exceeds 15 cm",
                 )
-
-        assert_alignment(maxima, predicted_maxima, "H")
-        assert_alignment(minima, predicted_minima, "L")
 
 
 if __name__ == "__main__":

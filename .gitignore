@@ -215,6 +215,8 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+benchmark_artifacts/
+benchmark_artifacts_6min/
 
 # Translations
 *.mo

@@ -26,6 +26,11 @@ dependencies = [
     "scipy>=1.15.3",
 ]
 
+[project.optional-dependencies]
+benchmark = [
+    "utide==0.3.1",
+]
+
 [project.urls]
 Homepage = "https://github.com/sigmadream/pytides-py3"
 Repository = "https://github.com/sigmadream/pytides-py3"

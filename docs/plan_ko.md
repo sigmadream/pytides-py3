@@ -16,7 +16,11 @@
 - Python >= 3.10, < 3.14 지원
 - NumPy >= 2.2.6, SciPy >= 1.15.3 지원
 - UV 기반 빌드/배포 체계 (`pyproject.toml` + setuptools)
-- 테스트 120개 통과
+- 체크인된 NOAA 스냅샷 기반 benchmark harness 추가
+- `hourly` 및 `6-minute` benchmark 프로필 추가
+- `UTide==0.3.1` 비교 경로 추가
+- `p95 extrema timing error`를 포함한 benchmark artifact 추가
+- 테스트 134개 통과
 
 ### 현재 의존성
 
@@ -67,23 +71,30 @@
 
 ---
 
-## 5단계: 학술 검증 (미착수)
+## 5단계: 학술 검증 (진행 중)
 
 NOAA 실측 데이터를 활용한 정확도 검증
 
-### 5.1 다관측소 장기 검증 (TODO #1)
-- [ ] 반일주/일주/혼합 조석을 대표하는 3개 이상 관측소 데이터 수집
-- [ ] 장기(≥3개월) 시계열로 RMSE·MAE·상관·극값 오차 비교
-- [ ] 현재 San Francisco 1개소(1주일) → 확장 필요
+### 5.1 다관측소 장기 검증
+- [x] 반일주/혼합조를 대표하는 3개 NOAA 관측소 스냅샷 수집
+- [x] 약 3개월 시계열로 RMSE·MAE·상관·극값 오차 비교 harness 작성
+- [x] San Francisco 1개소(1주일) 회귀 검증을 다관측소 benchmark로 확장
+- [x] `pytides-py3`와 `UTide`를 같은 데이터와 같은 split으로 비교
+- [x] Markdown + CSV + JSON artifact 생성
+- [x] `hourly`와 `6-minute` 해상도 비교 리포트 생성
 
 ### 5.2 계절 변동 검증 (TODO #2)
 - [ ] 동일 관측소의 계절별 구간(겨울/여름) 정확도 비교
-- [ ] 5.1 데이터 확보 후 진행
+- [ ] 기존 harness를 재사용해 계절별 benchmark window 추가
 
 ### 5.3 NOAA 공식 조화상수 비교 (TODO #3)
 - [ ] NOAA CO-OPS에서 관측소별 공식 amplitude/phase 수집
 - [ ] `Tide.decompose` 결과와 성분별(M2, S2, K1, O1 등) 비교 테스트 작성
 - [ ] 허용 오차 기준 설정
+
+### 5.4 benchmark 배포 자동화 (TODO #4)
+- [ ] GitHub Actions에서 benchmark artifact를 생성하고 업로드
+- [ ] 수동 실행 결과와 CI 결과의 일관성 검증
 
 ---
 

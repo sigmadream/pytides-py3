@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Added a repo-only NOAA benchmark harness with checked-in multi-station snapshots
+- Added Markdown + CSV/JSON benchmark artifact generation
+- Added hourly and 6-minute NOAA benchmark profiles for the same station set
+- Added stricter extrema metrics with `p95_time_error_minutes` in benchmark artifacts
+- Added regression, integration, and failure-path tests for the benchmark flow
+- Added optional `benchmark` dependency group for `UTide==0.3.1`
+- Added hourly vs 6-minute benchmark comparison reporting
+
 ## 2026-04-06 - Release 0.8.1
 
 - Python >= 3.10, < 3.14 support

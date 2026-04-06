@@ -75,6 +75,44 @@ bash scripts/test-python-matrix.sh --supported-only
 bash scripts/test-python-matrix.sh --experimental-only
 ```
 
+Benchmark harness with checked-in NOAA snapshots:
+
+```bash
+uv run python scripts/run_noaa_benchmark.py --output-dir ./benchmark_artifacts
+```
+
+Use the denser 6-minute NOAA profile when you want a stricter extrema benchmark:
+
+```bash
+uv run python scripts/run_noaa_benchmark.py --dataset 6-minute --output-dir ./benchmark_artifacts_6min
+```
+
+Compare the generated hourly and 6-minute artifacts in one Markdown report:
+
+```bash
+uv run python scripts/compare_benchmark_artifacts.py
+```
+
+Current checked-in benchmark readout:
+
+- `hourly` and `6-minute` both read as a near-tie on average RMSE between `pytides-py3` and `UTide`.
+- The `6-minute` profile keeps average RMSE effectively unchanged while improving average `p95 extrema timing error` from about `67.0 min` to about `39 min`.
+- The generated comparison report lives at `benchmark_artifacts/benchmark-resolution-comparison.md`.
+
+Install the optional comparison dependency:
+
+```bash
+uv sync --extra benchmark
+```
+
+Then run the full comparison:
+
+```bash
+uv run python scripts/run_noaa_benchmark.py --output-dir ./benchmark_artifacts
+```
+
+`UTide` comparison is optional. If `utide` is not installed, the runner records an explicit failure in the report instead of silently skipping it.
+
 ## References
 
 - Original pytides: https://github.com/sam-cox/pytides
