@@ -12,32 +12,33 @@
 
 ## 현재 상태
 
-- Python >= 3.11, < 3.14 지원
-- NumPy >= 2.3.1, SciPy >= 1.16.0
+- 버전: 0.8.1
+- Python >= 3.10, < 3.14 지원
+- NumPy >= 2.2.6, SciPy >= 1.15.3 지원
 - UV 기반 빌드/배포 체계 (`pyproject.toml` + setuptools)
-- 테스트 119개 통과
+- 테스트 120개 통과
 
 ### 현재 의존성
 
-- `numpy>=2.3.1`
-- `scipy>=1.16.0`
+- `numpy>=2.2.6`
+- `scipy>=1.15.3`
 
 ---
 
 ## ~~1단계: 의존성 업데이트~~
 
 ### 1.1 NumPy 업데이트
-- [x] `numpy>=1.8` → `numpy>=2.3.1`
+- [x] `numpy>=1.8` → `numpy>=2.2.6`
 - [x] `np.divide` → `/` 연산자로 변경
 - [x] NumPy 2.x API 호환성 검증 완료
 
 ### 1.2 SciPy 업데이트
-- [x] `scipy>=0.11` → `scipy>=1.16.0`
+- [x] `scipy>=0.11` → `scipy>=1.15.3`
 - [x] `scipy.optimize.leastsq` → `scipy.optimize.least_squares` 전환
 
 ## ~~2단계: Python 호환성 개선~~
-- [x] `python_requires='>=3.11,<3.14'`
-- [x] Python 3.11, 3.12, 3.13 지원
+- [x] `python_requires='>=3.10,<3.14'`
+- [x] Python 3.10, 3.11, 3.12, 3.13 지원
 - [x] `collections.abc` 사용
 - [x] f-string 사용
 
@@ -59,6 +60,10 @@
 - [x] 로버스트성 테스트 6개 추가 (NaN, inf, 전체 NaN, weights, huber loss, 빈 배열)
 
 ## ~~6단계: PyPI 배포~~
+
+- [x] 버전 0.8.1
+- [x] `CHANGES`, `CHANGES.md`, `plan.md`, `README.md`, `docs/` 문서 업데이트
+- [x] `uv build` → sdist + wheel 생성 확인
 
 ---
 

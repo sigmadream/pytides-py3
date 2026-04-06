@@ -1,3 +1,7 @@
+2026-04-06 - Release 0.8.1
+- Python >= 3.10, < 3.14 support
+- Lowered dependency floors to NumPy >= 2.2.6 and SciPy >= 1.15.3
+
 2026-02-08 - Release 0.8.0
 - Python >= 3.11, < 3.14 support
 - NumPy >= 2.3.1, SciPy >= 1.16.0

@@ -1,28 +1,33 @@
 # pytides-py3
 
-> pytides-py3는 조석 분석 및 예측을 위한 Python 라이브러리입니다. 이는 기존 pytides의 개선된 버전으로, Python 3.12.x에서 작동하도록 업데이트되었습니다.
+> pytides-py3는 조석 분석 및 예측을 위한 Python 라이브러리입니다. 기존 pytides를 현대적인 Python 및 NumPy/SciPy 환경에 맞게 갱신한 포크입니다.
 
-## 실행
+## 설치
 
 ```bash
-pip install -e .
-python -m unittest discover -s tests
+pip install pytides-py3
 ```
 
-## 주요 특징:
+또는 `uv`를 사용하면 다음과 같습니다.
+
+```bash
+uv add pytides-py3
+```
+
+## 주요 특징
 
 - 조석 분석 및 예측: 과거 조석 데이터를 기반으로 특정 위치의 조석 행동을 추정
 - 조화분조법(Harmonic Constituents) 사용: P. Schureman의 Special Publication 98에 제시된 방법론 적용
 - NOAA 조화분조 지원: NOAA에서 발표한 진폭과 위상을 직접 사용 가능
-- Scipy 최적화: leastsq 최소화 함수를 사용한 진폭과 위상 피팅
+- SciPy 최적화: `scipy.optimize.least_squares`를 사용한 진폭과 위상 피팅
 
-## 기술적 요구사항:
+## 기술적 요구사항
 
-- Python >= 3.11.x
-- NumPy >= 1.8
-- SciPy >= 0.11
+- Python >= 3.10, < 3.14
+- NumPy >= 2.2.6
+- SciPy >= 1.15.3
 
-## 주요 기능:
+## 주요 기능
 
 - 조석 모델링: `Tide` 클래스를 통한 조석 예측
 - 고조/저조 예측: `highs()`, `lows()` 메서드로 고조와 저조 시점 예측
@@ -30,6 +35,32 @@ python -m unittest discover -s tests
 - 시간대 처리: UTC datetime 형식 사용 (서머타임 조정 없음)
 
 ## 참고 문헌
+
+- Original pytides: https://github.com/sam-cox/pytides
+- Schureman, P. (1958). __Manual of Harmonic Analysis and Prediction of Tides__. U.S. Coast and Geodetic Survey, Special Publication No. 98.
+  - https://tidesandcurrents.noaa.gov/publications/SpecialPubNo98.pdf
+- Meeus, J. (1991). __Astronomical Algorithms__. Willmann-Bell.
+
+## 개발
+
+```bash
+uv sync
+uv run python -m unittest discover -s tests -v
+uv build
+```
+
+`uv` 기반 Python 버전 매트릭스 테스트:
+
+```bash
+bash scripts/test-python-matrix.sh
+```
+
+지원 범위만 또는 실험 범위만 따로 실행할 수도 있습니다.
+
+```bash
+bash scripts/test-python-matrix.sh --supported-only
+bash scripts/test-python-matrix.sh --experimental-only
+```
 
 ---
 
