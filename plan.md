@@ -12,33 +12,33 @@
 
 ## Current Status
 
-- **Version**: 0.8.0
-- Python >= 3.11, < 3.14 supported
-- NumPy >= 2.3.1, SciPy >= 1.16.0
+- **Version**: 0.8.1
+- Python >= 3.10, < 3.14 supported
+- NumPy >= 2.2.6, SciPy >= 1.15.3
 - UV-based build/distribution (`pyproject.toml` + setuptools)
 - 120 tests passing
 
 ### Current Dependencies
 
-- `numpy>=2.3.1`
-- `scipy>=1.16.0`
+- `numpy>=2.2.6`
+- `scipy>=1.15.3`
 
 ---
 
 ## ~~Phase 1: Dependency Update~~
 
 ### 1.1 NumPy Update
-- [x] `numpy>=1.8` → `numpy>=2.3.1`
+- [x] `numpy>=1.8` → `numpy>=2.2.6`
 - [x] Replace `np.divide` with `/` operator
 - [x] NumPy 2.x API compatibility verified
 
 ### 1.2 SciPy Update
-- [x] `scipy>=0.11` → `scipy>=1.16.0`
+- [x] `scipy>=0.11` → `scipy>=1.15.3`
 - [x] Migrate from `scipy.optimize.leastsq` to `scipy.optimize.least_squares`
 
 ## ~~Phase 2: Python Compatibility~~
-- [x] `python_requires='>=3.11,<3.14'`
-- [x] Support Python 3.11, 3.12, 3.13
+- [x] `python_requires='>=3.10,<3.14'`
+- [x] Support Python 3.10, 3.11, 3.12, 3.13
 - [x] Use `collections.abc`
 - [x] Use f-strings
 
@@ -65,8 +65,8 @@
 - [x] Relax node factor range assertion (`f < 2.0` → `f < 3.0`)
 
 ## ~~Phase 6: PyPI Release~~
-- [x] Version 0.8.0
-- [x] Update CHANGES, PLAN.md, README.md
+- [x] Version 0.8.1
+- [x] Update CHANGES, CHANGES.md, PLAN.md, README.md, docs/
 - [x] `uv build` produces sdist + wheel
 
 ---

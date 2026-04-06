@@ -4,16 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pytides-py3"
-version = "0.8.0"
+version = "0.8.1"
 description = "조석 분석 및 예측을 위한 Python 라이브러리 (Tidal analysis and prediction library)"
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.10,<3.14"
 authors = [
     { name = "Sangkon Han", email = "sigmadream@gmail.com" },
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -21,8 +22,8 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    "numpy>=2.3.1",
-    "scipy>=1.16.0",
+    "numpy>=2.2.6",
+    "scipy>=1.15.3",
 ]
 
 [project.urls]

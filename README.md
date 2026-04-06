@@ -1,6 +1,6 @@
 # pytides-py3
 
-> Tidal analysis and prediction library for Python 3.11+.
+> Tidal analysis and prediction library for Python 3.10+.
 > An improved fork of the original [pytides](https://github.com/sam-cox/pytides), updated for NumPy 2.x and modern SciPy.
 
 ## Installation
@@ -50,9 +50,9 @@ fitted = Tide.decompose(heights=observed_heights, t=observed_times)
 
 ## Requirements
 
-- Python >= 3.11, < 3.14
-- NumPy >= 2.3.1
-- SciPy >= 1.16.0
+- Python >= 3.10, < 3.14
+- NumPy >= 2.2.6
+- SciPy >= 1.15.3
 
 ## Development
 
@@ -60,6 +60,19 @@ fitted = Tide.decompose(heights=observed_heights, t=observed_times)
 uv sync
 uv run python -m unittest discover -s tests -v
 uv build
+```
+
+Python version matrix test with `uv`:
+
+```bash
+bash scripts/test-python-matrix.sh
+```
+
+Supported-only or experimental-only runs are also available:
+
+```bash
+bash scripts/test-python-matrix.sh --supported-only
+bash scripts/test-python-matrix.sh --experimental-only
 ```
 
 ## References
